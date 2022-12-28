@@ -1,92 +1,113 @@
-##: import alias package
-MDBoxLayout:
-  orientation: 'vertical'
+#: import ScreenManager kivy.uix.screenmanager.ScreenManager
+#: import Screen kivy.uix.screenmanager.ScreenManager
+WindowManager:
+  name: 'windowmanager'
+  MainPage:
+  HistoryItemScreen:
 
-  MDTopAppBar:
-    title: "Foodie"
+<MainPage>
+  name: 'mainpage'
 
-  MDBottomNavigation:
-    # color stuff
-    specific_text_color: 1, 1, 1, 1
-    md_bg_color: .2, .2, .2, 1
+  MDBoxLayout:
+    orientation: 'vertical'
 
-    MDBottomNavigationItem:
-      name: "Map"
-      text: 'Map'
-      icon: 'map'
+    MDTopAppBar:
+      title: "Foodie"
 
-      ##############################
-      # Map screen
-      ##############################
-      MDScreen: 
-          
-        MDLabel:
-          text: "this is the Map screen i think"
-          halign: "center"
-      
+    MDBottomNavigation:
+      # color stuff
+      specific_text_color: 1, 1, 1, 1
+      md_bg_color: .2, .2, .2, 1
 
-    MDBottomNavigationItem:
-      name: "Screen 2"
-      text: 'Add location'
-      icon: 'map-marker-plus'
-      ##############################
-      # Add-location screen
-      ##############################
-      MDScreen:
-        MDLabel:
-          text: "this is the Add location screen i think"
-          halign: "center"
+      MDBottomNavigationItem:
+        name: "Map"
+        text: 'Map'
+        icon: 'map'
 
-    MDBottomNavigationItem:
-      name: "History"
-      text: 'History'
-      icon: 'history'
-      ##############################
-      # History screen
-      ##############################
-      MDScreen:
-        BoxLayout:
-          orientation: 'vertical'
-          spacing: 10
-
-          TwoLineAvatarIconListItem:
-            text: "Restaurant name"
-            secondary_text: "28 Dec 2022"
-            on_release:  
-
-            IconRightWidget:
-              icon: "chevron-right"
-
+        ##############################
+        # Map screen
+        ##############################
+        MDScreen: 
+            
           MDLabel:
-            text: "this is the History screen i think"
+            text: "this is the Map screen i think"
+            halign: "center"
+        
+
+      MDBottomNavigationItem:
+        name: "Screen 2"
+        text: 'Add location'
+        icon: 'map-marker-plus'
+        ##############################
+        # Add-location screen
+        ##############################
+        MDScreen:
+          MDLabel:
+            text: "this is the Add location screen i think"
             halign: "center"
 
-    MDBottomNavigationItem:
-      name: "Profile"
-      text: 'Profile'
-      icon: 'account-circle'
-      ##############################
-      # Profile screen
-      ##############################
-      MDScreen:
-        BoxLayout:
-          orientation: 'vertical'
-          spacing: 10
-          padding: 100
+      MDBottomNavigationItem:
+        name: "History"
+        text: 'History'
+        icon: 'history'
+        ##############################
+        # History screen
+        ##############################
+        MDScreen:
+          BoxLayout:
+            orientation: 'vertical'
+            spacing: 10
 
-          MDTextField:
-            id: UsernameInput
-            hint_text: "Username"
-            mode: "rectangle"
-            text: "Example Username"
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "28 Dec 2022"
+              on_release:  app.root.current = "historyitem"
 
-          MDTextField:
-            id: DescriptionInput
-            hint_text: "Description"
-            multiline: True
-            text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-            mode: "rectangle"
+              IconRightWidget:
+                icon: "chevron-right"
 
-          MDLabel:
-            text: "this is the profile screen i think"
-            halign: "center"
+            MDLabel:
+              text: "this is the History screen i think"
+              halign: "center"
+
+      MDBottomNavigationItem:
+        name: "Profile"
+        text: 'Profile'
+        icon: 'account-circle'
+        ##############################
+        # Profile screen
+        ##############################
+        MDScreen:
+          BoxLayout:
+            orientation: 'vertical'
+            spacing: 10
+            padding: 100
+
+            MDTextField:
+              id: UsernameInput
+              hint_text: "Username"
+              mode: "rectangle"
+              text: "Example Username"
+
+            MDTextField:
+              id: DescriptionInput
+              hint_text: "Description"
+              multiline: True
+              text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
+              mode: "rectangle"
+
+            MDLabel:
+              text: "this is the profile screen i think"
+              halign: "center"
+
+<HistoryItemScreen>
+  name: 'historyitem'
+  MDBoxLayout:
+    orientation: 'vertical'
+
+    MDTopAppBar:
+      title: "Foodie"
+      left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
+    MDLabel:
+      text: "this is the historyitem screen i think"
+      halign: "center"
