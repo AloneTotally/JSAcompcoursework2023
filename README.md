@@ -7,8 +7,15 @@ App/program that helps you decide what to eat judging by the locations near you 
 - KivyMD
 - kv language
 - firebase
-  - firestore
-  - storage
+
+## Backend firebase
+- collections
+    - Users
+        - email
+    - locations
+        - long & latitude
+    - history
+        -
 
 ## Planned updates
 
@@ -19,6 +26,7 @@ App/program that helps you decide what to eat judging by the locations near you 
 - A way to recommend food places (1km radius?)
   - Maybe have presets to help? (In case food allergies, price range)
 
+
 ## How to set up project
 
 ### If the terminal is not already activated,
@@ -28,3 +36,5 @@ App/program that helps you decide what to eat judging by the locations near you 
 3. type `source <output in part 2>/venv/bin/activate`
 4. This should activate the venv. You should now see a "(venv)" in your terminal.
 5. Now just type `python3 main.py` and the app should run
+=======
+
