@@ -7,8 +7,6 @@ App/program that helps you decide what to eat judging by the locations near you 
 - KivyMD
 - kv language
 - firebase
-  - firestore
-  - storage
 
 ## Planned updates
 
@@ -24,4 +22,6 @@ App/program that helps you decide what to eat judging by the locations near you 
     - Users
         - email
     - locations
-    - 
+        - long & latitude
+    - history
+        -
