@@ -16,3 +16,10 @@ App/program that helps you decide what to eat judging by the locations near you 
   - Save as draft
 - A way to recommend food places (1km radius?)
   - Maybe have presets to help? (In case food allergies, price range)
+
+## Backend firebase
+- collections
+    - Users
+        - email
+    - locations
+    - 
