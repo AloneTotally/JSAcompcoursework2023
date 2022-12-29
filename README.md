@@ -32,8 +32,8 @@ App/program that helps you decide what to eat judging by the locations near you 
 
 1. Open the project in whatever code editor you like, and open the terminal. You should have python installed for this
 2. If you type `pip` in the terminal and it does not return a long message, carry out the following steps:
-   a. `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
-   b. `python3 get-pip.py`
+   - `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
+   - `python3 get-pip.py`
 3. Run `pip install virtualenv`
 4. Now just type `virtualenv .env && source .env/bin/activate && pip install -r requirements.txt`. You should see a (.env) before your command prompt. This shows that the virtual environment has been installed.
 
