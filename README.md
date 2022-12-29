@@ -9,13 +9,13 @@ App/program that helps you decide what to eat judging by the locations near you 
 - firebase
 
 ## Backend firebase
+
 - collections
-    - Users
-        - email
-    - locations
-        - long & latitude
-    - history
-        -
+  - Users
+    - email
+  - locations
+    - long & latitude
+  - ## history
 
 ## Planned updates
 
@@ -26,15 +26,10 @@ App/program that helps you decide what to eat judging by the locations near you 
 - A way to recommend food places (1km radius?)
   - Maybe have presets to help? (In case food allergies, price range)
 
-
 ## How to set up project
 
 ### If the terminal is not already activated,
 
 1. Open the project in whatever code editor you like, and open the terminal.
-2. type pwd in terminal, this should display your current path
-3. type `source <output in part 2>/venv/bin/activate`
-4. This should activate the venv. You should now see a "(venv)" in your terminal.
-5. Now just type `python3 main.py` and the app should run
-=======
-
+2. Now just type `virtualenv .env && source .env/bin/activate && pip install -r requirements.txt`. You should see a (.env) before your command prompt. This shows that the virtual environment has been installed.
+3. To run the project, run `python3 main.py` and the app will start building
