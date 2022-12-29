@@ -3,6 +3,7 @@
 WindowManager:
   name: 'windowmanager'
   MainPage:
+    name: 'mainpage'
   HistoryItemScreen:
 
 <MainPage>
@@ -23,16 +24,38 @@ WindowManager:
         name: "Map"
         text: 'Map'
         icon: 'map'
+        on_tab_release: app.root.current_screen.map_load()
 
         ##############################
         # Map screen
         ##############################
-        MDScreen: 
-            
-          MDLabel:
-            text: "this is the Map screen i think"
-            halign: "center"
-        
+
+        MDScreen:
+          FloatLayout:
+            orientation: 'vertical'
+            spacing: 10
+            MDFloatingActionButton:
+              icon: "android"
+              md_bg_color: app.theme_cls.primary_color
+              pos_hint: {'x': 0.5, 'y': 0.5}
+            MapView:
+              id: main_map
+              double_tap_zoom: True
+              # size: min(root.height, root.width), min(root.height, root.width)
+              size: 100, 100
+              on_lat: print('lat:', self.lat)
+              on_lon: print('lon:', self.lon)
+              lon: 103.76313504803471
+              lat: 1.3784949677817633
+              zoom: 19
+
+              # MapMarkerPopup:
+              #   lon: 103.76313504803471
+              #   lat: 1.3784949677817633
+              #   MDRoundFlatButton:
+              #     text: "Hillion mall"
+              #     text_color: 1, 1, 1, 1
+              #     md_bg_color: app.theme_cls.primary_color
 
       MDBottomNavigationItem:
         name: "Screen 2"
@@ -99,6 +122,9 @@ WindowManager:
             MDLabel:
               text: "this is the profile screen i think"
               halign: "center"
+
+
+
 
 <HistoryItemScreen>
   name: 'historyitem'
