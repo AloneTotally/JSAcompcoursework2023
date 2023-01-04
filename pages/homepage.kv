@@ -1,11 +1,17 @@
-#: import ScreenManager kivy.uix.screenmanager.ScreenManager
-#: import Screen kivy.uix.screenmanager.ScreenManager
+<CustomProgressBar@ProgressBar>:
+  size_hint_x: 0.8
+  color: [139, 92, 246, 1]
+<CustomMDLabel@MDLabel>:
+  font_size: 30
+  padding: (20,20)
 WindowManager:
   name: 'windowmanager'
   MainPage:
     name: 'mainpage'
   HistoryItemScreen:
     name: 'historyitem'
+  ViewLocation:
+    name: 'viewlocation'
 
 <MainPage>
   name: 'mainpage'
@@ -85,10 +91,11 @@ WindowManager:
             TwoLineAvatarIconListItem:
               text: "Restaurant name"
               secondary_text: "28 Dec 2022"
-              on_release:  app.root.current = "historyitem"
+              on_release:  app.to_history_item()
 
               IconRightWidget:
                 icon: "chevron-right"
+                on_release:  app.to_history_item()
 
             MDLabel:
               text: "this is the History screen i think"
@@ -138,3 +145,89 @@ WindowManager:
     MDLabel:
       text: "this is the historyitem screen i think"
       halign: "center"
+
+<ViewLocation>
+  name: 'viewlocation'
+  BoxLayout:
+    orientation: 'vertical'
+    spacing: 0
+
+    MDTopAppBar:
+      title: "Foodie"
+      left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
+
+    MDLabel:
+      font_size: 40
+      bold: True
+      text: "Hillion residences"
+      padding: (20,20)
+
+    MDLabel:
+      font_size: 20
+      text: "Lorem ipsum sed felis eget velit aliquet sagittis id consectetur purus ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt vitae."
+      padding: (20,20)
+
+    MapView:
+      id: add_location_map
+      double_tap_zoom: True
+      # size: min(root.height, root.width), min(root.height, root.width)
+      on_lat: print('lat:', self.lat)
+      on_lon: print('lon:', self.lon)
+      lon: 103.76313504803471
+      lat: 1.3784949677817633
+      zoom: 18
+      size_hint_x: 0.8
+      size_hint_y: 4
+      
+    BoxLayout:
+      size_hint_y: 4
+      orientation: 'horizontal'
+      BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+          id: rating
+          font_size: 100
+          bold: True
+          text: "4.5"
+          padding: (20,20)
+          size_hint_x: 2
+        CustomMDLabel:
+          id: review_count
+          text: "5 Reviews"
+      BoxLayout:
+        orientation: 'vertical'
+        CustomMDLabel:
+          text: "1"
+        CustomMDLabel:
+          text: "2"
+        CustomMDLabel:
+          text: "3"
+        CustomMDLabel:
+          text: "4"
+        CustomMDLabel:
+          text: "5"
+
+      BoxLayout:
+        orientation: 'vertical'
+        size_hint_x: 4
+
+        CustomProgressBar:
+          id: rating_one
+          value: 60
+        CustomProgressBar:
+          id: rating_two
+          value: 30
+        CustomProgressBar:
+          id: rating_three
+          value: 90
+        CustomProgressBar:
+          id: rating_four
+          value: 20
+        CustomProgressBar:
+          id: rating_five
+          value: 70
+          
+
+
+    
+
