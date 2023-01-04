@@ -4,6 +4,7 @@
 <CustomMDLabel@MDLabel>:
   font_size: 30
   padding: (20,20)
+
 WindowManager:
   name: 'windowmanager'
   MainPage:
@@ -12,6 +13,8 @@ WindowManager:
     name: 'historyitem'
   ViewLocation:
     name: 'viewlocation'
+  ReviewsPage:
+    name: 'reviewspage'
 
 <MainPage>
   name: 'mainpage'
@@ -176,12 +179,28 @@ WindowManager:
       lon: 103.76313504803471
       lat: 1.3784949677817633
       zoom: 18
-      size_hint_x: 0.8
+      pos_hint: {'center_x': 0.5, 'y': 0.5}
+      size_hint_x: 0.9
       size_hint_y: 4
+    BoxLayout:
+      MDLabel:
+        font_size: 70
+        bold: True
+        text: "Review"
+        padding: (20,20)
+        size_hint_x: 2
+
+      MDIconButton:
+        icon: "chevron-right"
+        size_hint_x: 0.3
+        text_color: app.theme_cls.primary_color
+        on_release: app.to_reviews_page()
+
       
     BoxLayout:
       size_hint_y: 4
       orientation: 'horizontal'
+      
       BoxLayout:
         orientation: 'vertical'
         MDLabel:
@@ -228,6 +247,13 @@ WindowManager:
           value: 70
           
 
-
-    
-
+<ReviewsPage>
+  name: "reviewspage"
+  BoxLayout:
+    orientation: 'vertical'
+    spacing: 0
+    MDTopAppBar:
+      title: "Foodie"
+      left_action_items: [['arrow-left', lambda x: app.back_view_location()]]
+    CustomMDLabel:
+      text: "This is reviews page i think"

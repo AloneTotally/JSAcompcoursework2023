@@ -14,6 +14,10 @@ class ViewLocation(Screen):
     pass
 
 
+class ReviewsPage(Screen):
+    pass
+
+
 class MainPage(Screen):
     def view_location(self):
         print("view_location has been run")
@@ -55,6 +59,14 @@ class HomePage(MDApp):
     def back_homepage(self):
         self.root.current = "mainpage"
         self.root.transition.direction = "right"
+
+    def back_view_location(self):
+        self.root.current = "viewlocation"
+        self.root.transition.direction = "right"
+
+    def to_reviews_page(self):
+        self.root.current = "reviewspage"
+        self.root.transition.direction = "left"
 
 
 if __name__ == '__main__':
