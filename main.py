@@ -6,6 +6,10 @@ from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
 from kivymd.uix.button import MDRoundFlatButton
 
 
+class AddHistoryItemScreen(Screen):
+    pass
+
+
 class HistoryItemScreen(Screen):
     pass
 
@@ -54,6 +58,10 @@ class HomePage(MDApp):
 
     def to_history_item(self):
         self.root.current = "historyitem"
+        self.root.transition.direction = "left"
+
+    def to_add_history_item(self):
+        self.root.current = "addhistoryitem"
         self.root.transition.direction = "left"
 
     def back_homepage(self):

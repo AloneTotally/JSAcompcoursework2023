@@ -11,6 +11,8 @@ WindowManager:
     name: 'mainpage'
   HistoryItemScreen:
     name: 'historyitem'
+  AddHistoryItemScreen:
+    name: 'addhistoryitem'
   ViewLocation:
     name: 'viewlocation'
   ReviewsPage:
@@ -48,6 +50,7 @@ WindowManager:
               icon: "android"
               md_bg_color: app.theme_cls.primary_color
               pos_hint: {'x': 0.5, 'y': 0.5}
+
             MapView:
               id: main_map
               double_tap_zoom: True
@@ -89,16 +92,50 @@ WindowManager:
         MDScreen:
           BoxLayout:
             orientation: 'vertical'
-            spacing: 10
+            FloatLayout:
 
+              AnchorLayout:
+                anchor_x: 'right'
+                anchor_y: 'bottom'
+                MDFloatingActionButton:
+                  icon: "android"
+                  md_bg_color: app.theme_cls.primary_color
+                  on_release: app.to_add_history_item()
+
+            MDLabel:
+              padding: (20, 0)
+              text: "January 13, 2023"
+              font_size: 50
+              bold: True
+            
             TwoLineAvatarIconListItem:
               text: "Restaurant name"
-              secondary_text: "28 Dec 2022"
+              secondary_text: "0830"
               on_release:  app.to_history_item()
 
               IconRightWidget:
                 icon: "chevron-right"
                 on_release:  app.to_history_item()
+
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "1230"
+              on_release:  app.to_history_item()
+
+              IconRightWidget:
+                icon: "chevron-right"
+                on_release:  app.to_history_item()
+
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "1830"
+              on_release:  app.to_history_item()
+
+              IconRightWidget:
+                icon: "chevron-right"
+                on_release:  app.to_history_item()
+
+            
 
             MDLabel:
               text: "this is the History screen i think"
@@ -149,6 +186,18 @@ WindowManager:
       text: "this is the historyitem screen i think"
       halign: "center"
 
+<AddHistoryItemScreen>
+  name: 'addhistoryitem'
+  MDBoxLayout:
+    orientation: 'vertical'
+
+    MDTopAppBar:
+      title: "Foodie"
+      left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
+    MDLabel:
+      text: "this is the addhistoryitem screen i think"
+      halign: "center"
+
 <ViewLocation>
   name: 'viewlocation'
   BoxLayout:
@@ -187,7 +236,7 @@ WindowManager:
         font_size: 70
         bold: True
         text: "Review"
-        padding: (20,20)
+        padding: (20,40)
         size_hint_x: 2
 
       MDIconButton:
@@ -198,7 +247,7 @@ WindowManager:
 
       
     BoxLayout:
-      size_hint_y: 4
+      size_hint_y: 3.5
       orientation: 'horizontal'
       
       BoxLayout:
