@@ -19,13 +19,13 @@
       specific_text_color: 1, 1, 1, 1
       md_bg_color: .2, .2, .2, 1
 
-      ##############################
-      # Map screen
-      ##############################
       MDBottomNavigationItem:
         name: "Map"
         text: 'Map'
         icon: 'map'
+        ##############################
+        # Map screen
+        ##############################
         on_tab_release: app.root.current_screen.map_load()
         MDScreen:
           FloatLayout:
@@ -69,56 +69,60 @@
         # History screen
         ##############################
         MDScreen:
-          BoxLayout:
-            orientation: 'vertical'
-            FloatLayout:
+          FloatLayout:
 
-              AnchorLayout:
-                anchor_x: 'right'
-                anchor_y: 'bottom'
-                MDFloatingActionButton:
-                  icon: "android"
-                  md_bg_color: app.theme_cls.primary_color
-                  on_release: app.to_add_history_item()
-                  padding: (20,20)
 
-            MDLabel:
-              padding: (20, 0)
-              text: "January 13, 2023"
-              font_size: 50
-              bold: True
-            
-            TwoLineAvatarIconListItem:
-              text: "Restaurant name"
-              secondary_text: "0830"
-              on_release:  app.to_history_item()
+            ScrollView:
+              do_scroll_y: True
+              pos_hint: {'center_x': 0.5}
+              GridLayout:
+                spacing: 10
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
 
-              IconRightWidget:
-                icon: "chevron-right"
-                on_release:  app.to_history_item()
+                padding: (0, 50)
+                
 
-            TwoLineAvatarIconListItem:
-              text: "Restaurant name"
-              secondary_text: "1230"
-              on_release:  app.to_history_item()
+                MDLabel:
+                  padding: (20, 0)
+                  text: "January 13, 2023"
+                  font_size: 50
+                  bold: True
+                
+                TwoLineAvatarIconListItem:
+                  text: "Restaurant name"
+                  secondary_text: "0830"
+                  on_release:  app.to_history_item()
 
-              IconRightWidget:
-                icon: "chevron-right"
-                on_release:  app.to_history_item()
+                  IconRightWidget:
+                    icon: "chevron-right"
+                    on_release:  app.to_history_item()
 
-            TwoLineAvatarIconListItem:
-              text: "Restaurant name"
-              secondary_text: "1830"
-              on_release:  app.to_history_item()
+                TwoLineAvatarIconListItem:
+                  text: "Restaurant name"
+                  secondary_text: "1230"
+                  on_release:  app.to_history_item()
 
-              IconRightWidget:
-                icon: "chevron-right"
-                on_release:  app.to_history_item()
+                  IconRightWidget:
+                    icon: "chevron-right"
+                    on_release:  app.to_history_item()
 
-              MDLabel:
-                text: "this is the History screen i think"
-                halign: "center"
+                TwoLineAvatarIconListItem:
+                  text: "Restaurant name"
+                  secondary_text: "1830"
+                  on_release:  app.to_history_item()
 
+                  IconRightWidget:
+                    icon: "chevron-right"
+                    on_release:  app.to_history_item()
+              
+            MDFloatingActionButton:
+              icon: "android"
+              md_bg_color: app.theme_cls.primary_color
+              on_release: app.to_add_history_item()
+              pos_hint: {'center_x': 0.95, 'y': 0.1}
+              
       MDBottomNavigationItem:
         name: "Profile"
         text: 'Profile'

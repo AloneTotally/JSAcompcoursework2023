@@ -29,24 +29,19 @@ class MainPage(Screen):
         self.manager.transition.direction = "left"
 
     def map_load(self):
-        print("map_load has been run")
-        print(str(dir(self.ids.main_map)))
-        try:
-            self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
-            marker = MapMarkerPopup(
-                lat=1.3784949677817633, lon=103.76313504803471)
-            marker.add_widget(
-                MDRoundFlatButton(
-                    text="python button",
-                    md_bg_color=[0.24705882352941178,
-                                 0.3176470588235294, 0.7098039215686275, 1.0],
-                    text_color=[1, 1, 1, 1],
-                    on_press=lambda x: self.view_location()
-                )
+        self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
+        marker = MapMarkerPopup(
+            lat=1.3784949677817633, lon=103.76313504803471)
+        marker.add_widget(
+            MDRoundFlatButton(
+                text="python button",
+                md_bg_color=[0.24705882352941178,
+                             0.3176470588235294, 0.7098039215686275, 1.0],
+                text_color=[1, 1, 1, 1],
+                on_press=lambda x: self.view_location()
             )
-            self.ids.main_map.add_widget(marker)
-        except Exception:
-            exit()
+        )
+        self.ids.main_map.add_widget(marker)
 
 
 # class WindowManager(ScreenManager):
@@ -71,10 +66,10 @@ class HomePage(MDApp):
 
         sm = ScreenManager()
         sm.add_widget(MainPage())
-        sm.add_widget(AddHistoryItemScreen())
-        sm.add_widget(HistoryItemScreen())
-        sm.add_widget(ViewLocation())
-        sm.add_widget(ReviewsPage())
+        sm.add_widget(AddHistoryItemScreen(name="addhistoryitem"))
+        sm.add_widget(HistoryItemScreen(name="historyitem"))
+        sm.add_widget(ViewLocation(name="viewlocation"))
+        sm.add_widget(ReviewsPage(name="reviewspage"))
         return sm
 
     def to_history_item(self):
