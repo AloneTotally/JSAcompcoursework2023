@@ -1,0 +1,151 @@
+<CustomProgressBar@ProgressBar>:
+  size_hint_x: 0.8
+  color: [139, 92, 246, 1]
+<CustomMDLabel@MDLabel>:
+  font_size: 30
+  padding: (20,20)
+
+<MainPage>
+  name: 'mainpage'
+
+  MDBoxLayout:
+    orientation: 'vertical'
+
+    MDTopAppBar:
+      title: "Foodie"
+
+    MDBottomNavigation:
+      # color stuff
+      specific_text_color: 1, 1, 1, 1
+      md_bg_color: .2, .2, .2, 1
+
+      ##############################
+      # Map screen
+      ##############################
+      MDBottomNavigationItem:
+        name: "Map"
+        text: 'Map'
+        icon: 'map'
+        on_tab_release: app.root.current_screen.map_load()
+        MDScreen:
+          FloatLayout:
+            orientation: 'vertical'
+            spacing: 10
+            
+            # MDFloatingActionButton:
+            #   icon: "android"
+            #   md_bg_color: app.theme_cls.primary_color
+            #   pos_hint: {'x': 0.5, 'y': 0.5}
+
+            MapView:
+              id: main_map
+              double_tap_zoom: True
+              # size: min(root.height, root.width), min(root.height, root.width)
+              size: 100, 100
+              on_lat: print('lat:', self.lat)
+              on_lon: print('lon:', self.lon)
+              lon: 103.76313504803471
+              lat: 1.3784949677817633
+              zoom: 19
+          
+
+      MDBottomNavigationItem:
+        name: "Screen 2"
+        text: 'Add location'
+        icon: 'map-marker-plus'
+        ##############################
+        # Add-location screen
+        ##############################
+        MDScreen:
+          MDLabel:
+            text: "this is the Add location screen i think"
+            halign: "center"
+
+      MDBottomNavigationItem:
+        name: "History"
+        text: 'History'
+        icon: 'history'
+        ##############################
+        # History screen
+        ##############################
+        MDScreen:
+          BoxLayout:
+            orientation: 'vertical'
+            FloatLayout:
+
+              AnchorLayout:
+                anchor_x: 'right'
+                anchor_y: 'bottom'
+                MDFloatingActionButton:
+                  icon: "android"
+                  md_bg_color: app.theme_cls.primary_color
+                  on_release: app.to_add_history_item()
+                  padding: (20,20)
+
+            MDLabel:
+              padding: (20, 0)
+              text: "January 13, 2023"
+              font_size: 50
+              bold: True
+            
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "0830"
+              on_release:  app.to_history_item()
+
+              IconRightWidget:
+                icon: "chevron-right"
+                on_release:  app.to_history_item()
+
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "1230"
+              on_release:  app.to_history_item()
+
+              IconRightWidget:
+                icon: "chevron-right"
+                on_release:  app.to_history_item()
+
+            TwoLineAvatarIconListItem:
+              text: "Restaurant name"
+              secondary_text: "1830"
+              on_release:  app.to_history_item()
+
+              IconRightWidget:
+                icon: "chevron-right"
+                on_release:  app.to_history_item()
+
+              MDLabel:
+                text: "this is the History screen i think"
+                halign: "center"
+
+      MDBottomNavigationItem:
+        name: "Profile"
+        text: 'Profile'
+        icon: 'account-circle'
+        ##############################
+        # Profile screen
+        ##############################
+        MDScreen:
+          BoxLayout:
+            orientation: 'vertical'
+            spacing: 10
+            padding: 100
+
+            MDTextField:
+              id: UsernameInput
+              hint_text: "Username"
+              mode: "rectangle"
+              text: "Example Username"
+
+            MDTextField:
+              id: DescriptionInput
+              hint_text: "Description"
+              multiline: True
+              text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
+              mode: "rectangle"
+
+            MDLabel:
+              text: "this is the profile screen i think"
+              halign: "center"
+

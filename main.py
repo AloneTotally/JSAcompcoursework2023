@@ -30,22 +30,27 @@ class MainPage(Screen):
 
     def map_load(self):
         print("map_load has been run")
-        self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
-        marker = MapMarkerPopup(lat=1.3784949677817633, lon=103.76313504803471)
-        marker.add_widget(
-            MDRoundFlatButton(
-                text="python button",
-                md_bg_color=[0.24705882352941178,
-                             0.3176470588235294, 0.7098039215686275, 1.0],
-                text_color=[1, 1, 1, 1],
-                on_press=lambda x: self.view_location()
+        print(str(dir(self.ids.main_map)))
+        try:
+            self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
+            marker = MapMarkerPopup(
+                lat=1.3784949677817633, lon=103.76313504803471)
+            marker.add_widget(
+                MDRoundFlatButton(
+                    text="python button",
+                    md_bg_color=[0.24705882352941178,
+                                 0.3176470588235294, 0.7098039215686275, 1.0],
+                    text_color=[1, 1, 1, 1],
+                    on_press=lambda x: self.view_location()
+                )
             )
-        )
-        self.ids.main_map.add_widget(marker)
+            self.ids.main_map.add_widget(marker)
+        except Exception:
+            exit()
 
 
-class WindowManager(ScreenManager):
-    pass
+# class WindowManager(ScreenManager):
+#     pass
 
 
 class HomePage(MDApp):
@@ -53,8 +58,24 @@ class HomePage(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.theme_style = "Dark"
-        my_app = Builder.load_file("pages/homepage.kv")
-        return my_app
+
+        # load the kv files
+        # This the main kv file
+        Builder.load_file("pages/mainpage.kv")
+
+        # These are the other pages which the main pages lead to
+        Builder.load_file("pages/otherpages/historyitem.kv")
+        Builder.load_file("pages/otherpages/addhistoryitem.kv")
+        Builder.load_file("pages/otherpages/reviews.kv")
+        Builder.load_file("pages/otherpages/viewlocation.kv")
+
+        sm = ScreenManager()
+        sm.add_widget(MainPage())
+        sm.add_widget(AddHistoryItemScreen())
+        sm.add_widget(HistoryItemScreen())
+        sm.add_widget(ViewLocation())
+        sm.add_widget(ReviewsPage())
+        return sm
 
     def to_history_item(self):
         self.root.current = "historyitem"
