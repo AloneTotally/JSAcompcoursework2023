@@ -41,9 +41,61 @@
     MDLabel:
       font_size: 40
       bold: True
-      text: "Hillion residences"
+      text: "Leave a review..."
       padding: (20,20)
     BoxLayout:
+      orientation: 'horizontal'
+      padding: (20, 20)
+      BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+          font_size: 30
+          bold: True
+          text: "Macdonalds"
+        MDLabel:
+          font_size: 25
+          text: "45 Reviews"
+          
+        
+    BoxLayout: # this contains the stars
+      orientation: 'horizontal'
+      spacing: 0
+      
+      MDIconButton:
+        theme_text_color: "Custom"
+        # text_color: app.theme_cls.primary_color
+        text_color: "#f6ae00"
+        icon: "star"
+      MDIconButton:
+        icon: "star"
+        theme_text_color: "Custom"
+        text_color: "#f6ae00"
+      MDIconButton:
+        icon: "star"
+        theme_text_color: "Custom"
+        text_color: "#f6ae00"
+      MDIconButton:
+        icon: "star"
+        theme_text_color: "Custom"
+        text_color: "#f6ae00"
+      MDIconButton:
+        icon: "star"
+        theme_text_color: "Custom"
+        text_color: "#f6ae00"
+    MDTextField:
+      hint_text: "Description"
+      multiline: True
+      max_text_length: 100
+      padding: (20,0)
+
+    MDFillRoundFlatButton:
+      text: "Submit"
+      pos_hint_x: 1
+      padding: (20,20)
+
+      
+
+
 
 
       
