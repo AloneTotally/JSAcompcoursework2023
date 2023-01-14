@@ -1,11 +1,55 @@
 <AddHistoryItemScreen>
   name: 'addhistoryitem'
+
   MDBoxLayout:
     orientation: 'vertical'
 
     MDTopAppBar:
-      title: "Foodie"
+      title: "Foodie - Add History"
       left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
-    MDLabel:
-      text: "this is the addhistoryitem screen i think"
-      halign: "center"
+
+    MDBoxLayout:
+      orientation: 'vertical'
+      padding: (20,20)
+      spacing: 10
+
+      MDLabel:
+        font_size: 40
+        bold: True
+        text: "Add new historyitem"
+        
+      MDTextField:
+        font_size: 20
+        id: restaurant_name
+        hint_text: "Name of restaurant (If not on map)"
+        multiline: True
+        size_hint_x: 0.8
+        # mode: "rectangle"
+
+      MDTextField:
+        font_size: 20
+        id: date
+        hint_text: "Date of consumption"
+        multiline: True
+        size_hint_x: 0.8
+        # mode: "rectangle"
+      
+      MDLabel:
+        font_size: 35
+        text: "Select where this food place is by clicking on the map."
+
+      MapView:
+        id: addhistoryitem_map
+        double_tap_zoom: True
+        # size: min(root.height, root.width), min(root.height, root.width)
+        on_lat: print('lat:', self.lat)
+        on_lon: print('lon:', self.lon)
+        lon: 103.76313504803471
+        lat: 1.3784949677817633
+        zoom: 18
+        pos_hint: {'center_x': 0.5, 'y': 0.1}
+        size_hint_x: 0.9
+        size_hint_y: 3
+
+      MDFillRoundFlatButton:
+        text: "Add to history"

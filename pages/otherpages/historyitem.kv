@@ -6,7 +6,7 @@
     spacing: 1
 
     MDTopAppBar:
-      title: "Foodie"
+      title: "Foodie - History Item"
       left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
 
     MDLabel:
@@ -27,7 +27,7 @@
       padding: (20, 0)
 
     MapView:
-      id: add_location_map
+      id: historyitem_map
       double_tap_zoom: True
       # size: min(root.height, root.width), min(root.height, root.width)
       on_lat: print('lat:', self.lat)
@@ -65,30 +65,26 @@
         BoxLayout: # this contains the stars
           orientation: 'horizontal'
           spacing: 0
+          padding: (0,0)
           
           MDIconButton:
-            padding: (0,0)
             theme_text_color: "Custom"
             # text_color: app.theme_cls.primary_color
             text_color: "#f6ae00"
             icon: "star"
           MDIconButton:
-            padding: (0,0)
             icon: "star"
             theme_text_color: "Custom"
             text_color: "#f6ae00"
           MDIconButton:
-            padding: (0,0)
             icon: "star"
             theme_text_color: "Custom"
             text_color: "#f6ae00"
           MDIconButton:
-            padding: (0,0)
             icon: "star"
             theme_text_color: "Custom"
             text_color: "#f6ae00"
           MDIconButton:
-            padding: (0,0)
             icon: "star"
             theme_text_color: "Custom"
             text_color: "#f6ae00"
