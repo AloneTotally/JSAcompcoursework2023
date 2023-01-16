@@ -72,6 +72,16 @@ class HomePage(MDApp):
         sm.add_widget(ReviewsPage(name="reviewspage"))
         return sm
 
+    def on_checkbox_active(self, checkbox, value):
+        if value:
+            print('The checkbox', checkbox, 'is active',
+                  'and', checkbox.state, 'state')
+        else:
+            print('The checkbox', checkbox, 'is inactive',
+                  'and', checkbox.state, 'state')
+
+    # Screen transition functions
+
     def to_history_item(self):
         self.root.current = "historyitem"
         self.root.transition.direction = "left"
