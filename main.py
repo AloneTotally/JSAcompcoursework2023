@@ -13,6 +13,7 @@ class AddLocationScreen_1(Screen):
 class AddLocationScreen_2(Screen):
     def take_photo(self):
         self.ids.camera.export_to_png("./location.png")
+        self.ids.location_image.source = "./location.png"
 
     def submit_new_location():
         pass
