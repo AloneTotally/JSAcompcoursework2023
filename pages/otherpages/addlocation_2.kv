@@ -1,0 +1,28 @@
+<AddLocationScreen_2>
+  name: 'addlocation_2'
+  BoxLayout:
+    orientation: "vertical"
+    spacing: 30
+
+    MDTopAppBar:
+      title: "Foodie - Add Location"
+      left_action_items: [['arrow-left', lambda x: app.page_change("addlocation_1", "right")]]
+
+    Label:
+      font_size: 50
+      bold: True
+      text: "Location photo"
+      padding: (20, 0)
+  
+    Camera:
+      id: camera
+      resolution: (640, 480)
+      play: False
+
+    MDFillRoundFlatButton:
+      text: "Take photo"
+      on_press: app.root.current_screen.take_photo()
+    
+    MDFillRoundFlatButton:
+      text: "Submit new location"
+      on_press: app.root.current_screen.submit_new_location()

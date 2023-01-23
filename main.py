@@ -6,6 +6,21 @@ from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
 from kivymd.uix.button import MDRoundFlatButton
 
 
+class AddLocationScreen_1(Screen):
+    pass
+
+
+class AddLocationScreen_2(Screen):
+    def take_photo(self):
+        self.ids.camera.export_to_png("./location.png")
+
+    def submit_new_location():
+        pass
+
+    def on_pre_enter(self):
+        self.ids.camera.play = True
+
+
 class AddHistoryItemScreen(Screen):
     pass
 
@@ -28,7 +43,7 @@ class MainPage(Screen):
         self.manager.current = "viewlocation"
         self.manager.transition.direction = "left"
 
-    def map_load(self):
+    def on_pre_enter(self):
         self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
         marker = MapMarkerPopup(
             lat=1.3784949677817633, lon=103.76313504803471)
@@ -63,13 +78,18 @@ class HomePage(MDApp):
         Builder.load_file("pages/otherpages/addhistoryitem.kv")
         Builder.load_file("pages/otherpages/reviews.kv")
         Builder.load_file("pages/otherpages/viewlocation.kv")
+        Builder.load_file("pages/otherpages/addlocation_1.kv")
+        Builder.load_file("pages/otherpages/addlocation_2.kv")
 
         sm = ScreenManager()
         sm.add_widget(MainPage())
         sm.add_widget(AddHistoryItemScreen(name="addhistoryitem"))
         sm.add_widget(HistoryItemScreen(name="historyitem"))
-        sm.add_widget(ViewLocation(name="viewlocation"))
         sm.add_widget(ReviewsPage(name="reviewspage"))
+        sm.add_widget(ViewLocation(name="viewlocation"))
+        sm.add_widget(AddLocationScreen_1(name="addlocation_1"))
+        sm.add_widget(AddLocationScreen_2(name="addlocation_2"))
+
         return sm
 
     def on_checkbox_active(self, checkbox, value):
@@ -82,25 +102,15 @@ class HomePage(MDApp):
 
     # Screen transition functions
 
-    def to_history_item(self):
-        self.root.current = "historyitem"
-        self.root.transition.direction = "left"
+    def page_change(self, name, direction):
+        self.root.current = name
+        self.root.transition.direction = direction
 
-    def to_add_history_item(self):
-        self.root.current = "addhistoryitem"
-        self.root.transition.direction = "left"
+    # The functions for going back to certain pages
 
     def back_homepage(self):
         self.root.current = "mainpage"
         self.root.transition.direction = "right"
-
-    def back_view_location(self):
-        self.root.current = "viewlocation"
-        self.root.transition.direction = "right"
-
-    def to_reviews_page(self):
-        self.root.current = "reviewspage"
-        self.root.transition.direction = "left"
 
 
 if __name__ == '__main__':

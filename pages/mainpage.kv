@@ -31,7 +31,6 @@
         ##############################
         # Map screen
         ##############################
-        on_tab_release: app.root.current_screen.map_load()
         MDScreen:
           FloatLayout:
             orientation: 'vertical'
@@ -61,89 +60,18 @@
         ##############################
         # Add-location screen
         ##############################
-        MDScreen:
-          BoxLayout:
-            orientation: "vertical"
-            spacing: 30
 
-            BoxLayout:
-              padding: (20, 20)
-              orientation: "horizontal"
-              size_hint_y: 0.1
-              MDLabel:
-                font_size: 40
-                bold: True
-                text: "Add new location"
-              MDLabel:
-                font_size: 40
-                color: 0.655,0.545,0.98,1
-                text: "5 Questions"
+        FloatLayout:
 
-            BoxLayout:
-              padding: (20, 0)
-              orientation: "vertical"
-              size_hint_y: 1.3
-              # size_hint_x: 0.7
-              pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
-              MDTextField:
-                id: LocationInput
-                hint_text: "Location name"
-                # mode: "rectangle"
-
-              BoxLayout:
-                orientation: "horizontal"
-                spacing: 30
-                MDTextField:
-                  id: OpeningTimeInput
-                  hint_text: "Opening time"
-                  # mode: "rectangle"
-
-                MDTextField:
-                  id: ClosingTimeInput
-                  hint_text: "Closing time"
-                  # mode: "rectangle"
-
-              MDLabel:
-                text: "Is it in a mall?"
-              BoxLayout:
-                orientation: "horizontal"
-
-                Check:
-                  active: True
-                  on_active: app.on_checkbox_active(*args)
-                  pos_hint: {'center_x': 0.5, 'y': 0.5}
-                MDLabel:
-                  text: "Yes"
-                  pos_hint: {'center_x': 0.5, 'y': 0.55}
-                Check:
-                  on_active: app.on_checkbox_active(*args)
-                  pos_hint: {'center_x': 0.5, 'y': 0.5}
-                MDLabel:
-                  text: "No"
-                  pos_hint: {'center_x': 0.5, 'y': 0.55}
-                
-              MDLabel:
-                font_size: 35
-                text: "Select where this food place is by clicking on the map."
-
-              MapView:
-                id: addhistoryitem_map
-                double_tap_zoom: True
-                # size: min(root.height, root.width), min(root.height, root.width)
-                on_lat: print('lat:', self.lat)
-                on_lon: print('lon:', self.lon)
-                lon: 103.76313504803471
-                lat: 1.3784949677817633
-                zoom: 18
-                pos_hint: {'center_x': 0.5, 'y': 0.1}
-                size_hint_x: 0.7
-                size_hint_y: 3
-
-              
-
-              MDFillRoundFlatButton:
-                text: "Add new location"
+          Label:
+            text: "Add new location"
+            font_size: 50
+            bold: True
+            pos_hint: {'center_x': 0.5, 'center_y': 0.7}
+          MDFillRoundFlatButton:
+            text: "Add new location"
+            on_press: app.page_change("addlocation_1", "left")
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
       MDBottomNavigationItem:
         name: "History"
@@ -177,36 +105,36 @@
                 TwoLineAvatarIconListItem:
                   text: "Restaurant name"
                   secondary_text: "0830"
-                  on_release:  app.to_history_item()
+                  on_release:  app.page_change("historyitem", "left")
 
                   IconRightWidget:
                     icon: "chevron-right"
-                    on_release:  app.to_history_item()
+                    on_release: app.page_change("historyitem", "left")
 
                 TwoLineAvatarIconListItem:
                   text: "Restaurant name"
                   secondary_text: "1230"
-                  on_release:  app.to_history_item()
+                  on_release: app.page_change("historyitem", "left")
 
                   IconRightWidget:
                     icon: "chevron-right"
-                    on_release:  app.to_history_item()
+                    on_release: app.page_change("historyitem", "left")
 
                 TwoLineAvatarIconListItem:
                   text: "Restaurant name"
                   secondary_text: "1830"
-                  on_release:  app.to_history_item()
+                  on_release: app.page_change("historyitem", "left")
 
                   IconRightWidget:
                     icon: "chevron-right"
-                    on_release:  app.to_history_item()
+                    on_release: app.page_change("historyitem", "left")
 
                 
               
             MDFloatingActionButton:
               icon: "plus"
               md_bg_color: app.theme_cls.primary_color
-              on_release: app.to_add_history_item()
+              on_release: app.page_change("addhistoryitem", "left")
               pos_hint: {'center_x': 0.95, 'y': 0.1}
               
       MDBottomNavigationItem:
