@@ -62,7 +62,14 @@ class AddLocationScreen_2(Screen):
         self.ids["take_photo"] = take_photo
 
     def submit_new_location(self):
-        pass
+        # TODO: THIS IS NOT DONE
+        # there is still mapview and is_mall
+        user_ans_dict = {
+            "opening_time": self.root.addlocation_1.ids.opening_time,
+            "closing_time": self.root.addlocation_1.ids.closing_time,
+            "location_name": self.root.addlocation_1.ids.location_name,
+            # MOREEEEEEEE
+        }
 
     def on_pre_enter(self):
         self.ids.camera.play = True
