@@ -1,9 +1,13 @@
+import os
+
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
 # from kivy.uix.image import AsyncImage
-from kivymd.uix.button import MDRoundFlatButton
+from kivymd.uix.button import MDRoundFlatButton, MDFillRoundFlatButton
+from kivy.uix.image import Image
+from kivy.uix.camera import Camera
 
 
 class AddLocationScreen_1(Screen):
@@ -11,15 +15,61 @@ class AddLocationScreen_1(Screen):
 
 
 class AddLocationScreen_2(Screen):
-    def take_photo(self):
-        self.ids.camera.export_to_png("./location.png")
-        self.ids.location_image.source = "./location.png"
 
-    def submit_new_location():
+    def take_photo(self, num, *args):
+        self.ids["camera"].play = False
+        self.ids["camera"].export_to_png(f"./location{num}.png")
+        self.ids.camerawrapper.remove_widget(
+            self.ids["camera"]
+        )  # remove camera widget
+
+        location_image = Image(source=f"./location{num}.png")
+        self.ids.camerawrapper.add_widget(
+            location_image)  # add image widget
+        self.ids["location_image"] = location_image
+
+        # remove stuff from appwrapper
+        self.ids.appwrapper.remove_widget(
+            self.ids["take_photo"]
+        )  # remove take_photo button
+
+        take_photo_again = MDFillRoundFlatButton(
+            text="Take photo again",
+            on_press=lambda x: self.take_photo_again(num),
+        )
+        self.ids.appwrapper.add_widget(take_photo_again)
+        self.ids["take_photo_again"] = take_photo_again
+
+    def take_photo_again(self, num, *args):
+        os.remove(f"./location{num}.png")
+        self.ids.camerawrapper.remove_widget(
+            self.ids["location_image"]
+        )  # remove image widget
+
+        camera = Camera(play=True, resolution=(640, 480))
+        self.ids.camerawrapper.add_widget(camera)  # add camera widget
+        self.ids["camera"] = camera
+
+        # remove stuff from appwrapper
+        self.ids.appwrapper.remove_widget(
+            self.ids["take_photo_again"]
+        )  # remove take_photo_again button
+        take_photo = MDFillRoundFlatButton(
+            text="Take photo",
+            on_press=lambda x: self.take_photo(num+1)
+        )
+        self.ids.appwrapper.add_widget(take_photo)
+        self.ids["take_photo"] = take_photo
+
+    def submit_new_location(self):
         pass
 
     def on_pre_enter(self):
         self.ids.camera.play = True
+
+    # in case user leaves page with camera still on
+    def on_pre_leave(self, *args):
+        self.ids.camera.play = False
 
 
 class AddHistoryItemScreen(Screen):
