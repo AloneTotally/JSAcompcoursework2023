@@ -118,7 +118,47 @@ class AddLocationScreen_2(Screen):
 
 
 class AddHistoryItemScreen(Screen):
-    pass
+    def on_pre_enter(self):
+        mapview = self.ids.addhistoryitem_map
+        mapview.on_touch_down = self.on_touch_map
+
+    def on_touch_map(self, touch):
+        # finding lat and lon on the map
+        print("Touch down on", touch.x, touch.y)
+        lat, lon = self.ids.addhistoryitem_map.get_latlon_at(touch.x, touch.y)
+        # TODO: works on computer sized screen but on phone is gg
+        print("Tapped on", lat, lon)
+        print(self.width, self.height)
+        lat, lon = lat - 0.0002737344, lon - 0.000263021
+        if self.width < 650:
+            lat -= 0.0000053673
+            lon += 0.0001235686
+
+            # putting the mapmarker
+        marker = MapMarker(lat=lat, lon=lon)
+        if self.ids.get("mapmarker") == None:
+            self.ids.addhistoryitem_map.add_marker(marker)
+            self.ids["mapmarker"] = marker
+        else:
+            self.ids.addhistoryitem_map.remove_widget(
+                self.ids["mapmarker"]
+            )
+            self.ids.addhistoryitem_map.add_marker(marker)
+            self.ids["mapmarker"] = marker
+
+    def submit_history_item(self):
+        location_coords = (
+            self.ids["mapmarker"].lat,
+            self.ids["mapmarker"].lon
+        )
+
+        user_ans_dict = {
+            "restaurant_name": self.ids.restaurant_name.text,
+            "Date_of_consumption": self.ids.date.text,
+            "location_coords": location_coords
+        }
+
+        print(user_ans_dict)
 
 
 class HistoryItemScreen(Screen):

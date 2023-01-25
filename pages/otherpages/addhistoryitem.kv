@@ -19,7 +19,6 @@
         text: "Add new historyitem"
         
       MDTextField:
-        font_size: 20
         id: restaurant_name
         hint_text: "Name of restaurant (If not on map)"
         multiline: True
@@ -27,7 +26,6 @@
         # mode: "rectangle"
 
       MDTextField:
-        font_size: 20
         id: date
         hint_text: "Date of consumption"
         multiline: True
@@ -53,3 +51,4 @@
 
       MDFillRoundFlatButton:
         text: "Add to history"
+        on_press: app.root.current_screen.submit_history_item()
