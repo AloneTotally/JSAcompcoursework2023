@@ -46,42 +46,47 @@
           id: closing_time
           hint_text: "Closing time"
           # mode: "rectangle"
-
+       
       MDLabel:
-        text: "Is it in a mall?"
-      BoxLayout:
-        orientation: "horizontal"
+        text: "Is it in a mall? (Tick checkbox for yes or no)"
+      
+      Check:
+        id: in_mall
+        active: False
+        on_active: app.on_checkbox_active(*args)
 
-        Check:
-          active: True
-          on_active: app.on_checkbox_active(*args)
-          pos_hint: {'center_x': 0.5, 'y': 0.5}
-        MDLabel:
-          text: "Yes"
-          pos_hint: {'center_x': 0.5, 'y': 0.55}
-        Check:
-          on_active: app.on_checkbox_active(*args)
-          pos_hint: {'center_x': 0.5, 'y': 0.5}
-        MDLabel:
-          text: "No"
-          pos_hint: {'center_x': 0.5, 'y': 0.55}
+
+      #   Check:
+      #     active: True
+      #     on_active: app.on_checkbox_active(*args)
+      #     pos_hint: {'center_x': 0.5, 'y': 0.5}
+      #   MDLabel:
+      #     text: "Yes"
+      #     pos_hint: {'center_x': 0.5, 'y': 0.55}
+      #   Check:
+      #     on_active: app.on_checkbox_active(*args)
+      #     pos_hint: {'center_x': 0.5, 'y': 0.5}
+      #   MDLabel:
+      #     text: "No"
+      #     pos_hint: {'center_x': 0.5, 'y': 0.55}
         
       MDLabel:
         font_size: 35
         text: "Select where this food place is by clicking on the map."
 
       MapView:
-        id: addhistoryitem_map
-        double_tap_zoom: True
+        id: addlocation_map
+        # double_tap_zoom: True
         # size: min(root.height, root.width), min(root.height, root.width)
         on_lat: print('lat:', self.lat)
         on_lon: print('lon:', self.lon)
         lon: 103.76313504803471
         lat: 1.3784949677817633
-        zoom: 18
+        zoom: 17
         pos_hint: {'center_x': 0.5, 'y': 0.1}
         size_hint_x: 0.7
         size_hint_y: 3
+        # on_touch_down: app.root.current_screen.on_touch_map()
 
       
 

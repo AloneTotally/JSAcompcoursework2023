@@ -11,7 +11,35 @@ from kivy.uix.camera import Camera
 
 
 class AddLocationScreen_1(Screen):
-    pass
+    def on_pre_enter(self):
+        mapview = self.ids.addlocation_map
+        mapview.on_touch_down = self.on_touch_map
+
+    def on_touch_map(self, touch):
+        # finding lat and lon on the map
+        print("Touch down on", touch.x, touch.y)
+        lat, lon = self.ids.addlocation_map.get_latlon_at(touch.x, touch.y)
+        # TODO: works on computer sized screen but on phone is gg
+        print("Tapped on", lat, lon)
+        print(self.width, self.height)
+        lat, lon = lat - 0.0003649793, lon - 0.0013741504
+        if self.width < 700:
+            lon += 0.0008598847
+        elif self.width < 1100:
+            lat -= -0.0000751428
+            lon -= -0.000451037
+
+            # putting the mapmarker
+        marker = MapMarker(lat=lat, lon=lon)
+        if self.ids.get("mapmarker") == None:
+            self.ids.addlocation_map.add_marker(marker)
+            self.ids["mapmarker"] = marker
+        else:
+            self.ids.addlocation_map.remove_widget(
+                self.ids["mapmarker"]
+            )
+            self.ids.addlocation_map.add_marker(marker)
+            self.ids["mapmarker"] = marker
 
 
 class AddLocationScreen_2(Screen):
@@ -62,14 +90,24 @@ class AddLocationScreen_2(Screen):
         self.ids["take_photo"] = take_photo
 
     def submit_new_location(self):
+        # pass
         # TODO: THIS IS NOT DONE
         # there is still mapview and is_mall
+        addlocation_1_ref = self.manager.get_screen("addlocation_1")
+
+        location_coords = (
+            addlocation_1_ref.ids["mapmarker"].lat,
+            addlocation_1_ref.ids["mapmarker"].lon
+        )
         user_ans_dict = {
-            "opening_time": self.root.addlocation_1.ids.opening_time,
-            "closing_time": self.root.addlocation_1.ids.closing_time,
-            "location_name": self.root.addlocation_1.ids.location_name,
+            "opening_time": addlocation_1_ref.ids.opening_time.text,
+            "closing_time": addlocation_1_ref.ids.closing_time.text,
+            "location_name": addlocation_1_ref.ids.location_name.text,
+            "is_mall": addlocation_1_ref.ids.in_mall.active,
+            "location_coords": location_coords
             # MOREEEEEEEE
         }
+        print(user_ans_dict)
 
     def on_pre_enter(self):
         self.ids.camera.play = True
@@ -151,6 +189,7 @@ class HomePage(MDApp):
         return sm
 
     def on_checkbox_active(self, checkbox, value):
+        print(value, checkbox.state)
         if value:
             print('The checkbox', checkbox, 'is active',
                   'and', checkbox.state, 'state')
