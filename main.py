@@ -105,7 +105,7 @@ class AddLocationScreen_2(Screen):
             "location_name": addlocation_1_ref.ids.location_name.text,
             "is_mall": addlocation_1_ref.ids.in_mall.active,
             "location_coords": location_coords
-            # MOREEEEEEEE
+            # MOREEEEEEEE, maybe level?
         }
         print(user_ans_dict)
 
