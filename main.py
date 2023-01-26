@@ -107,6 +107,7 @@ class AddLocationScreen_2(Screen):
             "location_coords": location_coords
             # MOREEEEEEEE, maybe level?
         }
+        # TODO: SEND REQUEST
         print(user_ans_dict)
 
     def on_pre_enter(self):
@@ -157,12 +158,55 @@ class AddHistoryItemScreen(Screen):
             "Date_of_consumption": self.ids.date.text,
             "location_coords": location_coords
         }
-
+        # TODO: SEND REQUEST
         print(user_ans_dict)
 
 
 class HistoryItemScreen(Screen):
-    pass
+
+    def click_star(self, star):
+        temp = 0
+        if star == 1:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#d6d6d6"
+            self.ids.star_three.text_color = "#d6d6d6"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 2:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#d6d6d6"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 3:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 4:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#f6ae00"
+        if star == 5:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#f6ae00"
+            self.ids.star_five.text_color = "#f6ae00"
+            self.ids.star_five.text_color = "#f6ae00"
+
+        # using ids to store a number
+        self.ids["starnum"] = star
+
+    def submit_review(self):
+        user_review_dict = {
+            "review": self.ids.review.text,
+            "rating": self.ids["starnum"]
+        }
+        # TODO: SEND REQUEST
+        print(user_review_dict)
 
 
 class ViewLocation(Screen):
@@ -179,7 +223,15 @@ class MainPage(Screen):
         self.manager.current = "viewlocation"
         self.manager.transition.direction = "left"
 
+    def update_profile(self):
+        new_profile_dict = {
+            "username": self.ids.username_input,
+            "description": self.ids.description_input
+        }
+        # TODO: SEND REQUEST
+
     def on_pre_enter(self):
+        # TODO: SEND REQUEST
         self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
         marker = MapMarkerPopup(
             lat=1.3784949677817633, lon=103.76313504803471)
