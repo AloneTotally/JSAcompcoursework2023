@@ -10,6 +10,17 @@ from kivy.uix.image import Image
 from kivy.uix.camera import Camera
 
 
+class LoginScreen(Screen):
+    def login(self):
+        user_info = {
+            "user_email": self.ids.user_email.text,
+            "username": self.ids.username.text,
+            "user_password": self.ids.password.text,
+        }
+        print(user_info)
+        # TODO: SEND REQUEST
+
+
 class AddLocationScreen_1(Screen):
     def on_pre_enter(self):
         mapview = self.ids.addlocation_map
@@ -165,7 +176,6 @@ class AddHistoryItemScreen(Screen):
 class HistoryItemScreen(Screen):
 
     def click_star(self, star):
-        temp = 0
         if star == 1:
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#d6d6d6"
@@ -268,8 +278,10 @@ class HomePage(MDApp):
         Builder.load_file("pages/otherpages/viewlocation.kv")
         Builder.load_file("pages/otherpages/addlocation_1.kv")
         Builder.load_file("pages/otherpages/addlocation_2.kv")
+        Builder.load_file("pages/login.kv")
 
         sm = ScreenManager()
+        sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(MainPage())
         sm.add_widget(AddHistoryItemScreen(name="addhistoryitem"))
         sm.add_widget(HistoryItemScreen(name="historyitem"))

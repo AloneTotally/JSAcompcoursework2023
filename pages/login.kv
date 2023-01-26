@@ -1,0 +1,46 @@
+<LoginScreen>
+  name: "reviewspage"
+  MDCard:
+    size_hint: 0.8, 0.6
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    # elevation: 10
+    padding: (25, 25)
+    spacing: 25
+    orientation: 'vertical'
+
+    MDLabel:
+      text: "Welcome to Foodie"
+      font_size: 40
+      halign: 'center'
+      size_hint_y: None
+      height: self.texture_size[1]
+      padding_y: 15
+      bold: True
+
+    MDTextField:
+      id: user_email
+      hint_text: "Email"
+      width: 200
+      font_size: 30
+      pos_hint: {'center_x': 0.5}
+
+    MDTextField:
+      id: username
+      hint_text: "Username"
+      width: 200
+      font_size: 30
+      pos_hint: {'center_x': 0.5}
+
+    MDTextField:
+      id: password
+      hint_text: "Password"
+      width: 200
+      font_size: 30
+      pos_hint: {'center_x': 0.5}
+      password: True
+
+    MDFillRoundFlatButton:
+      text: "Log in"
+      font_size: 30
+      pos_hint: {'center_x': 0.5}
+      on_press: app.root.current_screen.login()
