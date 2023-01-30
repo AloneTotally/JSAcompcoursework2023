@@ -1,24 +1,62 @@
 import os
+import datetime
 
+# kivy imports
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
-# from kivy.uix.image import AsyncImage
 from kivymd.uix.button import MDRoundFlatButton, MDFillRoundFlatButton
 from kivy.uix.image import Image
+# from kivy.uix.image import AsyncImage
 from kivy.uix.camera import Camera
+
+# firebase
+import firebase_admin
+from firebase_admin import credentials, auth, firestore
+
+cred = credentials.Certificate(
+    "woah-data-firebase-adminsdk-1n466-971a25d354.json")
+# intitialise the app
+firebase_admin.initialize_app(cred)
+# intitialise firestore
+db = firestore.client()
+USER_EMAIL = ""
 
 
 class LoginScreen(Screen):
+
     def login(self):
-        user_info = {
-            "user_email": self.ids.user_email.text,
-            "username": self.ids.username.text,
-            "user_password": self.ids.password.text,
-        }
-        print(user_info)
-        # TODO: SEND REQUEST
+        USER_EMAIL = self.ids.user_email.text
+        user_name = self.ids.username.text
+        user_password = self.ids.password.text
+        # user_info = {
+        #     "user_email": self.ids.user_email.text,
+        #     "username": self.ids.username.text,
+        #     "user_password": self.ids.password.text,
+        # }
+        try:
+            # User exists
+            user = auth.get_user_by_email(USER_EMAIL)
+            print("user exists")
+
+        except Exception:
+            print(Exception)
+            # User does not have an account
+            user = auth.create_user(
+                email=USER_EMAIL,
+                email_verified=False,
+                password=user_password,
+                display_name=user_name,
+                disabled=False
+            )
+            print('Sucessfully created new user: {0}'.format(user.uid))
+        finally:
+            # Go to main page
+            self.manager.current = "mainpage"
+            self.manager.transition.direction = "left"
+
+        # TODO: SEND REQUEST to firestore??
 
 
 class AddLocationScreen_1(Screen):
@@ -165,10 +203,15 @@ class AddHistoryItemScreen(Screen):
         )
 
         user_ans_dict = {
-            "restaurant_name": self.ids.restaurant_name.text,
-            "Date_of_consumption": self.ids.date.text,
-            "location_coords": location_coords
+            u"restaurant_name": self.ids.restaurant_name.text,
+            u"Date_of_consumption": self.ids.date.text,
+            u"location_coords": location_coords,
+            'dateExample': datetime.datetime.now(tz=datetime.timezone.utc),
         }
+        # NOT FINALISED YET
+        # db.collection("Users").document(USER_EMAIL).collection(
+        #     "History").add(user_ans_dict)
+
         # TODO: SEND REQUEST
         print(user_ans_dict)
 
