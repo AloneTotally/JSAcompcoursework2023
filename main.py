@@ -15,12 +15,17 @@ from kivy.uix.camera import Camera
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 
+# date
+from datetime import datetime, tzinfo
+import pytz
+
 cred = credentials.Certificate(
     "woah-data-firebase-adminsdk-1n466-971a25d354.json")
 # intitialise the app
 firebase_admin.initialize_app(cred)
 # intitialise firestore
 db = firestore.client()
+
 USER_EMAIL = ""
 
 
@@ -201,6 +206,9 @@ class AddHistoryItemScreen(Screen):
             self.ids["mapmarker"].lat,
             self.ids["mapmarker"].lon
         )
+        # sg_tz = pytz.timezone("Singapore")
+        # timeInSG = datetime.now(sg_tz)
+        # print(timeInSG)
 
         user_ans_dict = {
             u"restaurant_name": self.ids.restaurant_name.text,
