@@ -18,6 +18,7 @@ from firebase_admin import credentials, auth, firestore
 # date
 from datetime import datetime, tzinfo
 import pytz
+from firebase_admin.firestore import SERVER_TIMESTAMP
 
 cred = credentials.Certificate(
     "woah-data-firebase-adminsdk-1n466-971a25d354.json")
@@ -44,6 +45,8 @@ class LoginScreen(Screen):
             # User exists
             user = auth.get_user_by_email(USER_EMAIL)
             print("user exists")
+            # CHECK WHETHER PW CORRECT
+            print(dir(user))
 
         except Exception:
             print(Exception)
@@ -206,15 +209,15 @@ class AddHistoryItemScreen(Screen):
             self.ids["mapmarker"].lat,
             self.ids["mapmarker"].lon
         )
-        # sg_tz = pytz.timezone("Singapore")
-        # timeInSG = datetime.now(sg_tz)
-        # print(timeInSG)
+        sg_tz = pytz.timezone("Singapore")
 
         user_ans_dict = {
             u"restaurant_name": self.ids.restaurant_name.text,
             u"Date_of_consumption": self.ids.date.text,
             u"location_coords": location_coords,
-            'dateExample': datetime.datetime.now(tz=datetime.timezone.utc),
+            u'localtime': datetime.now(sg_tz),
+            u'servertimestamp': SERVER_TIMESTAMP
+
         }
         # NOT FINALISED YET
         # db.collection("Users").document(USER_EMAIL).collection(
