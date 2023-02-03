@@ -41,6 +41,7 @@ class LoginScreen(Screen):
         #     "username": self.ids.username.text,
         #     "user_password": self.ids.password.text,
         # }
+
         try:
             # User exists
             user = auth.get_user_by_email(USER_EMAIL)
