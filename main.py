@@ -1,3 +1,4 @@
+import geocoder
 import os
 import datetime
 
@@ -8,6 +9,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
 from kivymd.uix.button import MDRoundFlatButton, MDFillRoundFlatButton
 from kivy.uix.image import Image
+from kivymd.uix.snackbar import Snackbar
+from kivy.app import App
 # from kivy.uix.image import AsyncImage
 from kivy.uix.camera import Camera
 
@@ -16,6 +19,7 @@ import firebase_admin
 from firebase_admin import credentials, auth, firestore
 
 # date
+import geocoder
 from datetime import datetime, tzinfo
 import pytz
 from firebase_admin.firestore import SERVER_TIMESTAMP
@@ -27,6 +31,10 @@ firebase_admin.initialize_app(cred)
 # intitialise firestore
 db = firestore.client()
 
+g = geocoder.ip('me')
+currentlat, currentlon = g.latlng
+print(g.latlng)
+
 USER_EMAIL = ""
 
 
@@ -36,32 +44,50 @@ class LoginScreen(Screen):
         USER_EMAIL = self.ids.user_email.text
         user_name = self.ids.username.text
         user_password = self.ids.password.text
-        # user_info = {
-        #     "user_email": self.ids.user_email.text,
-        #     "username": self.ids.username.text,
-        #     "user_password": self.ids.password.text,
-        # }
+        userdata = {
+            u'email': USER_EMAIL,
+            u'username': user_name,
+            u'password': user_password,
+            u'description': ""
+        }
+        if USER_EMAIL == "" or user_name == "" or user_password == "":
+            # Snackbar(text="One of the fields is not filled",
+            #          button_text="BUTTON", button_callback=lambda: self.callback).show()
+            Snackbar(
+                text="One of the fields is not filled.", ).open()
+            return
 
         try:
             # User exists
-            user = auth.get_user_by_email(USER_EMAIL)
-            print("user exists")
+            # user = auth.get_user_by_email(USER_EMAIL)
+            # print("user exists")
             # CHECK WHETHER PW CORRECT
-            print(dir(user))
+            user_db_ref = db.collection(u'Users').document(USER_EMAIL)
+            userdata = user_db_ref.get()
+            if userdata.exists:
+                userdata = userdata.to_dict()
+                print(userdata)
+            else:
+                raise Exception("user does not exist")
 
         except Exception:
             print(Exception)
             # User does not have an account
-            user = auth.create_user(
-                email=USER_EMAIL,
-                email_verified=False,
-                password=user_password,
-                display_name=user_name,
-                disabled=False
-            )
-            print('Sucessfully created new user: {0}'.format(user.uid))
+            # user = auth.create_user(
+            #     email=USER_EMAIL,
+            #     email_verified=False,
+            #     password=user_password,
+            #     display_name=user_name,
+            #     disabled=False
+            # )
+            print(userdata)
+            user_db_ref = db.collection(u'Users').document(
+                USER_EMAIL).set(userdata)
+            # print('Sucessfully created new user: {0}'.format(userdata.uid))
         finally:
             # Go to main page
+            # storing the user in the ids part
+            self.ids["user"] = userdata
             self.manager.current = "mainpage"
             self.manager.transition.direction = "left"
 
@@ -166,7 +192,9 @@ class AddLocationScreen_2(Screen):
             # MOREEEEEEEE, maybe level?
         }
         # TODO: SEND REQUEST
+        # TODO: REMOVE PHOTO in storage
         print(user_ans_dict)
+        # db.collection(u'Locations').document()
 
     def on_pre_enter(self):
         self.ids.camera.play = True
@@ -220,12 +248,12 @@ class AddHistoryItemScreen(Screen):
             u'servertimestamp': SERVER_TIMESTAMP
 
         }
+        # TODO: SEND REQUEST
+        print(user_ans_dict)
+
         # NOT FINALISED YET
         # db.collection("Users").document(USER_EMAIL).collection(
         #     "History").add(user_ans_dict)
-
-        # TODO: SEND REQUEST
-        print(user_ans_dict)
 
 
 class HistoryItemScreen(Screen):
@@ -267,8 +295,8 @@ class HistoryItemScreen(Screen):
 
     def submit_review(self):
         user_review_dict = {
-            "review": self.ids.review.text,
-            "rating": self.ids["starnum"]
+            u"review": self.ids.review.text,
+            u"rating": self.ids["starnum"]
         }
         # TODO: SEND REQUEST
         print(user_review_dict)
@@ -290,10 +318,13 @@ class MainPage(Screen):
 
     def update_profile(self):
         new_profile_dict = {
-            "username": self.ids.username_input,
-            "description": self.ids.description_input
+            u"username": self.ids.username_input,
+            u"description": self.ids.description_input
         }
         # TODO: SEND REQUEST
+        user = self.manager.get_screen('login').ids['user']
+        profile_ref = db.collection('Users').document(user['email'])
+        profile_ref.update(new_profile_dict)
 
     def on_pre_enter(self):
         # TODO: SEND REQUEST
@@ -367,6 +398,12 @@ class HomePage(MDApp):
     def back_homepage(self):
         self.root.current = "mainpage"
         self.root.transition.direction = "right"
+
+    # Close an error popup
+    def callback(self, instance):
+        from kivymd.toast import toast
+
+        toast(instance.text)
 
 
 if __name__ == '__main__':
