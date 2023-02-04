@@ -53,8 +53,7 @@ class LoginScreen(Screen):
         if USER_EMAIL == "" or user_name == "" or user_password == "":
             # Snackbar(text="One of the fields is not filled",
             #          button_text="BUTTON", button_callback=lambda: self.callback).show()
-            Snackbar(
-                text="One of the fields is not filled.", ).open()
+            Snackbar(text="One of the fields is not filled.").open()
             return
 
         try:
@@ -63,9 +62,9 @@ class LoginScreen(Screen):
             # print("user exists")
             # CHECK WHETHER PW CORRECT
             user_db_ref = db.collection(u'Users').document(USER_EMAIL)
-            userdata = user_db_ref.get()
-            if userdata.exists:
-                userdata = userdata.to_dict()
+            newuserdata = user_db_ref.get()
+            if newuserdata.exists:
+                userdata = newuserdata.to_dict()
                 print(userdata)
             else:
                 raise Exception("user does not exist")
@@ -80,9 +79,7 @@ class LoginScreen(Screen):
             #     display_name=user_name,
             #     disabled=False
             # )
-            print(userdata)
-            user_db_ref = db.collection(u'Users').document(
-                USER_EMAIL).set(userdata)
+            db.collection('Users').document(USER_EMAIL).set(userdata)
             # print('Sucessfully created new user: {0}'.format(userdata.uid))
         finally:
             # Go to main page
@@ -95,17 +92,40 @@ class LoginScreen(Screen):
 
 
 class AddLocationScreen_1(Screen):
+    def to_addlocation2(self):
+        location_coords = []
+        try:
+            location_coords = [
+                self.ids["mapmarker"].lat,
+                self.ids["mapmarker"].lon
+            ]
+
+        except Exception:
+            Snackbar(text="One of the fields is not filled.").open()
+        user_ans_dict = {
+            "opening_time": self.ids.opening_time.text,
+            "closing_time": self.ids.closing_time.text,
+            "location_name": self.ids.location_name.text,
+            "is_mall": self.ids.in_mall.active,
+            "location_coords": location_coords
+            # MOREEEEEEEE, maybe level?
+        }
+        if user_ans_dict["closing_time"] == "" or user_ans_dict["location_name"] == "" or user_ans_dict["opening_time"] == "":
+            Snackbar(text="One of the fields is not filled.").open()
+            return
+
+        self.manager.current = "addlocation_2"
+        self.manager.transition.direction = "left"
+
     def on_pre_enter(self):
         mapview = self.ids.addlocation_map
         mapview.on_touch_down = self.on_touch_map
 
     def on_touch_map(self, touch):
+        bbox = self.ids.addlocation_map.get_bbox()
+
         # finding lat and lon on the map
-        print("Touch down on", touch.x, touch.y)
         lat, lon = self.ids.addlocation_map.get_latlon_at(touch.x, touch.y)
-        # TODO: works on computer sized screen but on phone is gg
-        print("Tapped on", lat, lon)
-        print(self.width, self.height)
         lat, lon = lat - 0.0003649793, lon - 0.0013741504
         if self.width < 700:
             lon += 0.0008598847
@@ -113,7 +133,17 @@ class AddLocationScreen_1(Screen):
             lat -= -0.0000751428
             lon -= -0.000451037
 
-            # putting the mapmarker
+        marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
+        if not marker_within_mapview:
+            return
+
+        print("Touch down on", touch.x, touch.y)
+
+        # TODO: works on computer sized screen but on phone is gg
+
+        print("Tapped on", lat, lon)
+        print(self.width, self.height)
+        # putting the mapmarker
         marker = MapMarker(lat=lat, lon=lon)
         if self.ids.get("mapmarker") == None:
             self.ids.addlocation_map.add_marker(marker)
@@ -178,7 +208,6 @@ class AddLocationScreen_2(Screen):
         # TODO: THIS IS NOT DONE
         # there is still mapview and is_mall
         addlocation_1_ref = self.manager.get_screen("addlocation_1")
-
         location_coords = (
             addlocation_1_ref.ids["mapmarker"].lat,
             addlocation_1_ref.ids["mapmarker"].lon
@@ -318,16 +347,23 @@ class MainPage(Screen):
 
     def update_profile(self):
         new_profile_dict = {
-            u"username": self.ids.username_input,
-            u"description": self.ids.description_input
+            u"username": self.ids.username_input.text,
+            u"description": self.ids.description_input.text
         }
         # TODO: SEND REQUEST
         user = self.manager.get_screen('login').ids['user']
+        print(user)
         profile_ref = db.collection('Users').document(user['email'])
         profile_ref.update(new_profile_dict)
 
     def on_pre_enter(self):
         # TODO: SEND REQUEST
+        print("entered mainpage")
+        user = self.manager.get_screen('login').ids['user']
+        print(user)
+        self.ids.username_input.text = user['username']
+        self.ids.description_input.text = user['description']
+
         self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
         marker = MapMarkerPopup(
             lat=1.3784949677817633, lon=103.76313504803471)
@@ -368,7 +404,7 @@ class HomePage(MDApp):
 
         sm = ScreenManager()
         sm.add_widget(LoginScreen(name="login"))
-        sm.add_widget(MainPage())
+        sm.add_widget(MainPage(name="mainpage"))
         sm.add_widget(AddHistoryItemScreen(name="addhistoryitem"))
         sm.add_widget(HistoryItemScreen(name="historyitem"))
         sm.add_widget(ReviewsPage(name="reviewspage"))

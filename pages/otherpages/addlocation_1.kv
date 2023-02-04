@@ -76,8 +76,8 @@
 
       MapView:
         id: addlocation_map
-        # double_tap_zoom: True
-        # size: min(root.height, root.width), min(root.height, root.width)
+        double_tap_zoom: True
+        size: root.width * 0.7, root.height * 0.3
         on_lat: print('lat:', self.lat)
         on_lon: print('lon:', self.lon)
         lon: 103.76313504803471
@@ -86,10 +86,11 @@
         pos_hint: {'center_x': 0.5, 'y': 0.1}
         size_hint_x: 0.7
         size_hint_y: 3
+        interactive: True
         # on_touch_down: app.root.current_screen.on_touch_map()
 
       
 
       MDFillRoundFlatButton:
         text: "Next page"
-        on_press: app.page_change("addlocation_2", "left")
+        on_press: app.root.current_screen.to_addlocation2()
