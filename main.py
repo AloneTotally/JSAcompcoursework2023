@@ -16,7 +16,7 @@ from kivy.uix.camera import Camera
 
 # firebase
 import firebase_admin
-from firebase_admin import credentials, auth, firestore
+from firebase_admin import credentials, storage, firestore
 
 # date
 import geocoder
@@ -25,9 +25,11 @@ import pytz
 from firebase_admin.firestore import SERVER_TIMESTAMP
 
 cred = credentials.Certificate(
-    "woah-data-firebase-adminsdk-1n466-971a25d354.json")
+    "foodie-804d6-firebase-adminsdk-b0buj-0424ea77a6.json")
 # intitialise the app
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred, {
+    'storageBucket': "foodie-804d6.appspot.com",
+})
 # intitialise firestore
 db = firestore.client()
 
@@ -36,6 +38,7 @@ currentlat, currentlon = g.latlng
 print(g.latlng)
 
 USER_EMAIL = ""
+photo_path = f""
 
 
 class LoginScreen(Screen):
@@ -87,7 +90,6 @@ class LoginScreen(Screen):
             self.ids["user"] = userdata
             self.manager.current = "mainpage"
             self.manager.transition.direction = "left"
-
         # TODO: SEND REQUEST to firestore??
 
 
@@ -101,7 +103,8 @@ class AddLocationScreen_1(Screen):
             ]
 
         except Exception:
-            Snackbar(text="One of the fields is not filled.").open()
+            Snackbar(text="Location not selected.").open()
+            return
         user_ans_dict = {
             "opening_time": self.ids.opening_time.text,
             "closing_time": self.ids.closing_time.text,
@@ -159,12 +162,14 @@ class AddLocationScreen_1(Screen):
 class AddLocationScreen_2(Screen):
 
     def take_photo(self, num, *args):
+        global photo_path
         self.ids["camera"].play = False
         self.ids["camera"].export_to_png(f"./location{num}.png")
         self.ids.camerawrapper.remove_widget(
             self.ids["camera"]
         )  # remove camera widget
-
+        photo_path = f"./location{num}.png"
+        print(photo_path)
         location_image = Image(source=f"./location{num}.png")
         self.ids.camerawrapper.add_widget(
             location_image)  # add image widget
@@ -204,7 +209,19 @@ class AddLocationScreen_2(Screen):
         self.ids["take_photo"] = take_photo
 
     def submit_new_location(self):
-        # pass
+
+        if photo_path == "":
+            Snackbar(text="No picture is uploaded.").open()
+            return
+        print('submit_new_location ran')
+
+        bucket = storage.bucket()  # storage bucket
+        blob = bucket.blob(photo_path)
+        blob.upload_from_filename(photo_path)
+
+        blob.make_public()
+        url = blob.public_url
+
         # TODO: THIS IS NOT DONE
         # there is still mapview and is_mall
         addlocation_1_ref = self.manager.get_screen("addlocation_1")
@@ -217,11 +234,13 @@ class AddLocationScreen_2(Screen):
             "closing_time": addlocation_1_ref.ids.closing_time.text,
             "location_name": addlocation_1_ref.ids.location_name.text,
             "is_mall": addlocation_1_ref.ids.in_mall.active,
-            "location_coords": location_coords
+            "location_coords": location_coords,
+            "photoURL": url,
             # MOREEEEEEEE, maybe level?
         }
         # TODO: SEND REQUEST
         # TODO: REMOVE PHOTO in storage
+        os.remove(photo_path)
         print(user_ans_dict)
         # db.collection(u'Locations').document()
 
@@ -239,18 +258,21 @@ class AddHistoryItemScreen(Screen):
         mapview.on_touch_down = self.on_touch_map
 
     def on_touch_map(self, touch):
+        bbox = self.ids.addhistoryitem_map.get_bbox()
+
         # finding lat and lon on the map
-        print("Touch down on", touch.x, touch.y)
         lat, lon = self.ids.addhistoryitem_map.get_latlon_at(touch.x, touch.y)
-        # TODO: works on computer sized screen but on phone is gg
-        print("Tapped on", lat, lon)
-        print(self.width, self.height)
         lat, lon = lat - 0.0002737344, lon - 0.000263021
         if self.width < 650:
             lat -= 0.0000053673
             lon += 0.0001235686
 
-            # putting the mapmarker
+        # TODO: works on computer sized screen but on phone is gg
+        marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
+        if not marker_within_mapview:
+            return
+        print("Tapped on", lat, lon)
+        # putting the mapmarker
         marker = MapMarker(lat=lat, lon=lon)
         if self.ids.get("mapmarker") == None:
             self.ids.addhistoryitem_map.add_marker(marker)
@@ -263,26 +285,32 @@ class AddHistoryItemScreen(Screen):
             self.ids["mapmarker"] = marker
 
     def submit_history_item(self):
-        location_coords = (
-            self.ids["mapmarker"].lat,
-            self.ids["mapmarker"].lon
-        )
+        location_coords = []
+        try:
+            location_coords = [
+                self.ids["mapmarker"].lat,
+                self.ids["mapmarker"].lon
+            ]
+        except Exception:
+            Snackbar(text="Location not selected.").open()
+            return
         sg_tz = pytz.timezone("Singapore")
 
         user_ans_dict = {
-            u"restaurant_name": self.ids.restaurant_name.text,
-            u"Date_of_consumption": self.ids.date.text,
-            u"location_coords": location_coords,
-            u'localtime': datetime.now(sg_tz),
-            u'servertimestamp': SERVER_TIMESTAMP
-
+            'restaurant_name': self.ids.restaurant_name.text,
+            'Date_of_consumption': self.ids.date.text,
+            'location_coords': location_coords,
+            'localtime': datetime.now(sg_tz),
+            'servertimestamp': SERVER_TIMESTAMP
         }
+        if user_ans_dict['restaurant_name'] == "" or user_ans_dict['Date_of_consumption'] == "":
+            Snackbar(text="One of the fields is not filled.").open()
+            return
         # TODO: SEND REQUEST
         print(user_ans_dict)
 
         # NOT FINALISED YET
-        # db.collection("Users").document(USER_EMAIL).collection(
-        #     "History").add(user_ans_dict)
+        # db.collection("History").document(USER_EMAIL).set(user_ans_dict)
 
 
 class HistoryItemScreen(Screen):
@@ -339,6 +367,41 @@ class ReviewsPage(Screen):
     pass
 
 
+class ReviewItemScreen(Screen):
+    def on_pre_enter(self, *args):
+        star = 3
+        if star == 1:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#d6d6d6"
+            self.ids.star_three.text_color = "#d6d6d6"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 2:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#d6d6d6"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 3:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#d6d6d6"
+            self.ids.star_five.text_color = "#d6d6d6"
+        if star == 4:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#f6ae00"
+        if star == 5:
+            self.ids.star_one.text_color = "#f6ae00"
+            self.ids.star_two.text_color = "#f6ae00"
+            self.ids.star_three.text_color = "#f6ae00"
+            self.ids.star_four.text_color = "#f6ae00"
+            self.ids.star_five.text_color = "#f6ae00"
+            self.ids.star_five.text_color = "#f6ae00"
+
+
 class MainPage(Screen):
     def view_location(self):
         print("view_location has been run")
@@ -352,9 +415,13 @@ class MainPage(Screen):
         }
         # TODO: SEND REQUEST
         user = self.manager.get_screen('login').ids['user']
-        print(user)
+
         profile_ref = db.collection('Users').document(user['email'])
         profile_ref.update(new_profile_dict)
+
+        user[u'username'] = new_profile_dict[u"username"]
+        user[u'description'] = new_profile_dict[u"description"]
+        print(user)
 
     def on_pre_enter(self):
         # TODO: SEND REQUEST
@@ -397,6 +464,7 @@ class HomePage(MDApp):
         Builder.load_file("pages/otherpages/historyitem.kv")
         Builder.load_file("pages/otherpages/addhistoryitem.kv")
         Builder.load_file("pages/otherpages/reviews.kv")
+        Builder.load_file("pages/otherpages/reviewitem.kv")
         Builder.load_file("pages/otherpages/viewlocation.kv")
         Builder.load_file("pages/otherpages/addlocation_1.kv")
         Builder.load_file("pages/otherpages/addlocation_2.kv")
@@ -408,6 +476,7 @@ class HomePage(MDApp):
         sm.add_widget(AddHistoryItemScreen(name="addhistoryitem"))
         sm.add_widget(HistoryItemScreen(name="historyitem"))
         sm.add_widget(ReviewsPage(name="reviewspage"))
+        sm.add_widget(ReviewItemScreen(name="reviewitem"))
         sm.add_widget(ViewLocation(name="viewlocation"))
         sm.add_widget(AddLocationScreen_1(name="addlocation_1"))
         sm.add_widget(AddLocationScreen_2(name="addlocation_2"))
