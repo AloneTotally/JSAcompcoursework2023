@@ -10,7 +10,10 @@ from kivy_garden.mapview import MapView, MapMarkerPopup, MapMarker, MapSource
 from kivymd.uix.button import MDRoundFlatButton, MDFillRoundFlatButton
 from kivy.uix.image import Image
 from kivymd.uix.snackbar import Snackbar
-from kivy.app import App
+from kivymd.uix.pickers import MDDatePicker
+from kivymd.uix.pickers import MDTimePicker
+from kivymd.uix.list import TwoLineAvatarIconListItem
+
 # from kivy.uix.image import AsyncImage
 from kivy.uix.camera import Camera
 
@@ -44,6 +47,7 @@ photo_path = f""
 class LoginScreen(Screen):
 
     def login(self):
+        global USER_EMAIL
         USER_EMAIL = self.ids.user_email.text
         user_name = self.ids.username.text
         user_password = self.ids.password.text
@@ -257,6 +261,23 @@ class AddHistoryItemScreen(Screen):
         mapview = self.ids.addhistoryitem_map
         mapview.on_touch_down = self.on_touch_map
 
+    def show_date_picker(self):
+        date_dialog = MDDatePicker()
+        date_dialog.bind(on_save=self.on_date_save)
+        date_dialog.open()
+
+    def on_date_save(self, instance, value, date_range):
+        self.ids.date_input.text = str(value)
+        print(value)
+
+    def show_time_picker(self):
+        time_dialog = MDTimePicker()
+        time_dialog.bind(time=self.get_time)
+        time_dialog.open()
+
+    def get_time(self, instance, time):
+        self.ids.time_input.text = str(time)
+
     def on_touch_map(self, touch):
         bbox = self.ids.addhistoryitem_map.get_bbox()
 
@@ -294,23 +315,27 @@ class AddHistoryItemScreen(Screen):
         except Exception:
             Snackbar(text="Location not selected.").open()
             return
-        sg_tz = pytz.timezone("Singapore")
-
+        # sg_tz = pytz.timezone("Singapore")
+        # current_time = datetime.now(sg_tz)
+        date_time = self.ids.date_input.text + "," + self.ids.time_input.text
         user_ans_dict = {
             'restaurant_name': self.ids.restaurant_name.text,
-            'Date_of_consumption': self.ids.date.text,
+            # 'Date_of_consumption': self.ids.date.text,
             'location_coords': location_coords,
-            'localtime': datetime.now(sg_tz),
+            'date': self.ids.date_input.text,
+            'time': self.ids.time_input.text,
             'servertimestamp': SERVER_TIMESTAMP
         }
-        if user_ans_dict['restaurant_name'] == "" or user_ans_dict['Date_of_consumption'] == "":
+        if user_ans_dict['restaurant_name'] == "" or user_ans_dict['date'] == "" or user_ans_dict['time'] == "":
             Snackbar(text="One of the fields is not filled.").open()
             return
         # TODO: SEND REQUEST
         print(user_ans_dict)
 
         # NOT FINALISED YET
-        # db.collection("History").document(USER_EMAIL).set(user_ans_dict)
+        historyitem_ref = db.collection(u"Users").document(
+            USER_EMAIL).collection(u"History").document(date_time)
+        historyitem_ref.set(user_ans_dict)
 
 
 class HistoryItemScreen(Screen):
@@ -426,12 +451,28 @@ class MainPage(Screen):
     def on_pre_enter(self):
         # TODO: SEND REQUEST
         print("entered mainpage")
+
+        # GET data from firestore
+        history_ref = db.collection(u"Users").document(
+            USER_EMAIL).collection(u"History")
+        docs = history_ref.stream()
+        historyitems = []
+        for doc in docs:
+            historyitemdata = doc.to_dict()
+            # TwoLineAvatarIconListItem(
+            #     text=historyitemdata["restaurant_name"],
+            #     secondary_text=historyitemdata["time"],
+            #     on_release=callback)
+            # self.ids.historylist is the history wrapper
+
+            historyitems.append(historyitemdata)
+
         user = self.manager.get_screen('login').ids['user']
         print(user)
         self.ids.username_input.text = user['username']
         self.ids.description_input.text = user['description']
 
-        self.ids.main_map.center_on(1.3784949677817633, 103.76313504803471)
+        self.ids.main_map.center_on(currentlat, currentlon)
         marker = MapMarkerPopup(
             lat=1.3784949677817633, lon=103.76313504803471)
         marker.add_widget(

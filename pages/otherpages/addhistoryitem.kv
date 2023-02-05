@@ -25,12 +25,44 @@
         size_hint_x: 0.8
         # mode: "rectangle"
 
-      MDTextField:
-        id: date
-        hint_text: "Date of consumption"
-        multiline: True
-        size_hint_x: 0.8
-        # mode: "rectangle"
+      # MDTextField:
+      #   id: date
+      #   hint_text: "Date of consumption"
+      #   multiline: True
+      #   size_hint_x: 0.8
+      #   # mode: "rectangle"
+      BoxLayout:
+        orientation: 'horizontal'
+        spacing: 10
+        MDFillRoundFlatButton:
+          text: "Select date"
+          on_release: app.root.current_screen.show_date_picker()
+        MDFillRoundFlatButton:
+          text: "Select time"
+          on_release: app.root.current_screen.show_time_picker()
+      
+      BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+          font_size: 40
+          bold: True
+          text: "Date of consumption: "
+        MDLabel:
+          id: date_input
+          text: ""
+          color: app.theme_cls.primary_color
+        
+      BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+          font_size: 40
+          bold: True
+          text: "Time of consumption: "
+        MDLabel:
+          id: time_input
+          text: ""
+          color: app.theme_cls.primary_color
+      
       
       MDLabel:
         font_size: 35
