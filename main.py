@@ -42,6 +42,8 @@ print(g.latlng)
 
 USER_EMAIL = ""
 photo_path = f""
+history_data = {}
+history_items = []
 
 
 class LoginScreen(Screen):
@@ -62,6 +64,7 @@ class LoginScreen(Screen):
             #          button_text="BUTTON", button_callback=lambda: self.callback).show()
             Snackbar(text="One of the fields is not filled.").open()
             return
+        password_correct = True
 
         try:
             # User exists
@@ -71,6 +74,9 @@ class LoginScreen(Screen):
             user_db_ref = db.collection(u'Users').document(USER_EMAIL)
             newuserdata = user_db_ref.get()
             if newuserdata.exists:
+                if userdata['password'] != newuserdata.to_dict()['password']:
+                    Snackbar(text="Password incorrect.").open()
+                    password_correct = False
                 userdata = newuserdata.to_dict()
                 print(userdata)
             else:
@@ -91,6 +97,8 @@ class LoginScreen(Screen):
         finally:
             # Go to main page
             # storing the user in the ids part
+            if not password_correct:
+                return
             self.ids["user"] = userdata
             self.manager.current = "mainpage"
             self.manager.transition.direction = "left"
@@ -98,6 +106,22 @@ class LoginScreen(Screen):
 
 
 class AddLocationScreen_1(Screen):
+    def show_closing_time_picker(self):
+        time_dialog = MDTimePicker()
+        time_dialog.bind(time=self.get_closing_time)
+        time_dialog.open()
+
+    def show_opening_time_picker(self):
+        time_dialog = MDTimePicker()
+        time_dialog.bind(time=self.get_opening_time)
+        time_dialog.open()
+
+    def get_opening_time(self, instance, time):
+        self.ids.opening_time.text = str(time)
+
+    def get_closing_time(self, instance, time):
+        self.ids.closing_time.text = str(time)
+
     def to_addlocation2(self):
         location_coords = []
         try:
@@ -219,13 +243,6 @@ class AddLocationScreen_2(Screen):
             return
         print('submit_new_location ran')
 
-        bucket = storage.bucket()  # storage bucket
-        blob = bucket.blob(photo_path)
-        blob.upload_from_filename(photo_path)
-
-        blob.make_public()
-        url = blob.public_url
-
         # TODO: THIS IS NOT DONE
         # there is still mapview and is_mall
         addlocation_1_ref = self.manager.get_screen("addlocation_1")
@@ -233,6 +250,16 @@ class AddLocationScreen_2(Screen):
             addlocation_1_ref.ids["mapmarker"].lat,
             addlocation_1_ref.ids["mapmarker"].lon
         )
+
+        bucket = storage.bucket()  # storage bucket
+        blob = bucket.blob(
+            f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)})"
+        )
+        blob.upload_from_filename(photo_path)
+
+        blob.make_public()
+        url = blob.public_url
+        print(url)
         user_ans_dict = {
             "opening_time": addlocation_1_ref.ids.opening_time.text,
             "closing_time": addlocation_1_ref.ids.closing_time.text,
@@ -243,7 +270,6 @@ class AddLocationScreen_2(Screen):
             # MOREEEEEEEE, maybe level?
         }
         # TODO: SEND REQUEST
-        # TODO: REMOVE PHOTO in storage
         os.remove(photo_path)
         print(user_ans_dict)
         # db.collection(u'Locations').document()
@@ -335,6 +361,8 @@ class AddHistoryItemScreen(Screen):
         # NOT FINALISED YET
         historyitem_ref = db.collection(u"Users").document(
             USER_EMAIL).collection(u"History").document(date_time)
+        print(historyitem_ref)
+        print(USER_EMAIL, date_time)
         historyitem_ref.set(user_ans_dict)
 
 
@@ -374,6 +402,22 @@ class HistoryItemScreen(Screen):
 
         # using ids to store a number
         self.ids["starnum"] = star
+
+    def on_pre_enter(self, *args):
+        global history_data
+        print(history_data)
+        self.ids.location_name = history_data['restaurant_name']
+        self.ids.location_name_review = history_data['restaurant_name']
+        self.ids.eaten_time = "Eaten at: " + str(history_data['time'])
+        self.ids.historyitem_map.lat = currentlat
+        self.ids.historyitem_map.lon = currentlon
+        marker = MapMarkerPopup(
+            lat=history_data['location_coords'][0], lon=history_data['location_coords'][1])
+        self.ids.historyitem_map.add_widget(marker)
+        # self.ids.num_reviews = "Reviews"
+
+        # self.ids.history_map.
+        # TODO: Add mapmarker
 
     def submit_review(self):
         user_review_dict = {
@@ -448,7 +492,14 @@ class MainPage(Screen):
         user[u'description'] = new_profile_dict[u"description"]
         print(user)
 
-    def on_pre_enter(self):
+    def to_historyitem(self, data):
+        global history_data
+        history_data = data
+        print(history_data)
+        self.manager.current = "historyitem"
+        self.manager.transition.direction = "left"
+
+    def on_enter(self):
         # TODO: SEND REQUEST
         print("entered mainpage")
 
@@ -456,17 +507,23 @@ class MainPage(Screen):
         history_ref = db.collection(u"Users").document(
             USER_EMAIL).collection(u"History")
         docs = history_ref.stream()
-        historyitems = []
+        global history_items
+        count = -1
         for doc in docs:
+            count += 1
             historyitemdata = doc.to_dict()
-            # TwoLineAvatarIconListItem(
-            #     text=historyitemdata["restaurant_name"],
-            #     secondary_text=historyitemdata["time"],
-            #     on_release=callback)
+            listitem = TwoLineAvatarIconListItem(
+                text=historyitemdata["restaurant_name"],
+                secondary_text=historyitemdata["time"],
+                on_release=lambda x: self.to_historyitem(historyitemdata))
+            # TODO: add a date to the widget
+            if historyitemdata not in history_items:
+                history_items.append(historyitemdata)
+                self.ids.historylist.add_widget(listitem)
             # self.ids.historylist is the history wrapper
 
-            historyitems.append(historyitemdata)
-
+            history_items.append(historyitemdata)
+            print(historyitemdata)
         user = self.manager.get_screen('login').ids['user']
         print(user)
         self.ids.username_input.text = user['username']

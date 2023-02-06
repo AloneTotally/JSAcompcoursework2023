@@ -33,20 +33,50 @@
         id: location_name
         hint_text: "Location name"
         # mode: "rectangle"
+    
+      # BoxLayout:
+      #   orientation: "horizontal"
+      #   spacing: 30
+      #   MDTextField:
+      #     id: opening_time
+      #     hint_text: "Opening time (Double click)"
+      #     readonly: True 
+      #     on_text: app.root.current_screen.show_opening_time_picker()
+      #     # mode: "rectangle"
 
+      #   MDTextField:
+      #     id: closing_time
+      #     hint_text: "Closing time (Double click)"
+      #     readonly: True 
+      #     on_double_tap: app.root.current_screen.show_closing_time_picker()
+      #     # mode: "rectangle"
       BoxLayout:
-        orientation: "horizontal"
-        spacing: 30
-        MDTextField:
+        orientation: 'horizontal'
+        spacing: 10
+        MDFillRoundFlatButton:
+          text: "Select opening hours"
+          on_release: app.root.current_screen.show_opening_time_picker()
+        MDFillRoundFlatButton:
+          text: "Select closing hours"
+          on_release: app.root.current_screen.show_closing_time_picker()
+      
+      BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+          text: "Opening hours: "
+        MDLabel:
           id: opening_time
-          hint_text: "Opening time"
-          # mode: "rectangle"
-
-        MDTextField:
+          text: ""
+          color: app.theme_cls.primary_color
+        
+      BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+          text: "Closing hours: "
+        MDLabel:
           id: closing_time
-          hint_text: "Closing time"
-          # mode: "rectangle"
-       
+          text: ""
+          color: app.theme_cls.primary_color
       MDLabel:
         text: "Is it in a mall? (Tick checkbox for yes or no)"
       
