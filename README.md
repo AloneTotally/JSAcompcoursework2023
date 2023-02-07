@@ -8,7 +8,7 @@ App/program that helps you decide what to eat judging by the locations near you 
 - kv language
 - firebase
 
-Note: As ip address is used to find the user's location, it might not be as accurate as using the native features (Python has limitations)
+> Note: As ip address is used to find the user's location, it might not be as accurate as using the native features (Python has limitations)
 
 ## Planned updates
 
