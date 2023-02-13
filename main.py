@@ -150,10 +150,13 @@ class AddLocationScreen_1(Screen):
 
     def on_pre_enter(self):
         mapview = self.ids.addlocation_map
+        mapview.lat = currentlat
+        mapview.lon = currentlon
         mapview.on_touch_down = self.on_touch_map
 
     def on_touch_map(self, touch):
         bbox = self.ids.addlocation_map.get_bbox()
+        print(bbox)
 
         # finding lat and lon on the map
         lat, lon = self.ids.addlocation_map.get_latlon_at(touch.x, touch.y)
@@ -246,20 +249,30 @@ class AddLocationScreen_2(Screen):
         # TODO: THIS IS NOT DONE
         # there is still mapview and is_mall
         addlocation_1_ref = self.manager.get_screen("addlocation_1")
-        location_coords = (
-            addlocation_1_ref.ids["mapmarker"].lat,
-            addlocation_1_ref.ids["mapmarker"].lon
-        )
+        location_coords = [
+            str(addlocation_1_ref.ids["mapmarker"].lat),
+            str(addlocation_1_ref.ids["mapmarker"].lon)
+        ]
 
         bucket = storage.bucket()  # storage bucket
-        blob = bucket.blob(
-            f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)})"
-        )
+        name = f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)})"
+        blob = bucket.blob(name)
         blob.upload_from_filename(photo_path)
 
         blob.make_public()
         url = blob.public_url
         print(url)
+
+        os.remove(photo_path)
+
+        # finding midpoint in chunk
+        location_coords[0] = float(location_coords[0])
+        location_coords[1] = float(location_coords[1])
+
+        lat = round(int(location_coords[0] * 50) / 50 + 0.01, 2)
+        lon = round(int(location_coords[1] * 50) / 50 + 0.01, 2)
+        chunk = (lat, lon)
+
         user_ans_dict = {
             "opening_time": addlocation_1_ref.ids.opening_time.text,
             "closing_time": addlocation_1_ref.ids.closing_time.text,
@@ -267,12 +280,26 @@ class AddLocationScreen_2(Screen):
             "is_mall": addlocation_1_ref.ids.in_mall.active,
             "location_coords": location_coords,
             "photoURL": url,
+            "chunk": chunk,
+            "1starcount": 0,
+            "2starcount": 0,
+            "3starcount": 0,
+            "4starcount": 0,
+            "5starcount": 0,
+            # "chunk": chunk
             # MOREEEEEEEE, maybe level?
         }
-        # TODO: SEND REQUEST
-        os.remove(photo_path)
+        chunk_ref = db.collection(u'Chunks').document(str(chunk))
+        chunk_ref.set({"chunk": chunk})
+        # Setting the document
+        location_ref = db.collection(u'Chunks').document(str(chunk)).collection(
+            u'Locations').document(user_ans_dict["location_name"])
+        location_ref.set(user_ans_dict)
+        print("Document set!")
+
         print(user_ans_dict)
-        # db.collection(u'Locations').document()
+        # db.collection(u'Chunks').document(name).set(user_ans_dict)
+        print("location set!")
 
     def on_pre_enter(self):
         self.ids.camera.play = True
@@ -405,19 +432,19 @@ class HistoryItemScreen(Screen):
 
     def on_pre_enter(self, *args):
         global history_data
-        print(history_data)
+        print("Entered historyitem: ", history_data)
         self.ids.location_name = history_data['restaurant_name']
         self.ids.location_name_review = history_data['restaurant_name']
         self.ids.eaten_time = "Eaten at: " + str(history_data['time'])
         self.ids.historyitem_map.lat = currentlat
         self.ids.historyitem_map.lon = currentlon
+        # TODO: SET BBOX
         marker = MapMarkerPopup(
             lat=history_data['location_coords'][0], lon=history_data['location_coords'][1])
         self.ids.historyitem_map.add_widget(marker)
         # self.ids.num_reviews = "Reviews"
 
         # self.ids.history_map.
-        # TODO: Add mapmarker
 
     def submit_review(self):
         user_review_dict = {
@@ -472,6 +499,14 @@ class ReviewItemScreen(Screen):
 
 
 class MainPage(Screen):
+    def convert_to_bbox(self, coords):
+        return (
+            round(coords[0]-0.01, 2),
+            round(coords[1]-0.01, 2),
+            round(coords[0]+0.01, 2),
+            round(coords[1]+0.01, 2)
+        )
+
     def view_location(self):
         print("view_location has been run")
         self.manager.current = "viewlocation"
@@ -500,9 +535,50 @@ class MainPage(Screen):
         self.manager.transition.direction = "left"
 
     def on_enter(self):
-        # TODO: SEND REQUEST
-        print("entered mainpage")
+        self.ids.main_map.center_on(currentlat, currentlon)
+        # TODO: comment out this later
+        # self.ids.main_map.center_on(1.31, 103.85)
+        bbox = self.ids.main_map.get_bbox()
+        bottom_lat = round(int(bbox[0] * 50) / 50, 2)
+        bottom_lon = round(int(bbox[1] * 50) / 50, 2)
+        top_lat = round(int(bbox[2] * 50) / 50 + 0.02, 2)
+        top_lon = round(int(bbox[3] * 50) / 50 + 0.02, 2)
+        print(bottom_lat, bottom_lon, top_lat, top_lon)
+        # lat_diff = top_lat - bottom_lat
+        # lon_diff = top_lon - bottom_lon
 
+        arr_coords = []
+        temp_lat = round(bottom_lat + 0.01, 2)
+        temp_lon = round(bottom_lon + 0.01, 2)
+
+        while temp_lat < top_lat:
+            temp_lon = round(bottom_lon + 0.01, 2)
+            while temp_lon < top_lon:
+                arr_coords.append((temp_lat, temp_lon))
+                temp_lon = round(temp_lon + 0.02, 2)
+            temp_lat = round(temp_lat + 0.02, 2)
+
+        print(arr_coords)
+        # Sending request
+        chunk_ref = db.collection(u"Chunks")
+        # chunk_ref = chunk_ref.where(u'chunk', u'in', arr_coords)
+        # docs = chunk_ref.stream()
+        # # print(docs)
+        # for doc in docs:
+        #     print(f'{doc.id} => {doc.to_dict()}')
+        #     print(dir(doc.get))
+        for i in arr_coords:
+            # doc = chunk_ref.document(str(i)).get()
+            # if doc.exists:
+            chunk_locations_ref = chunk_ref.document(
+                str(i)).collection('locations')
+            docs = chunk_locations_ref.stream()
+            for doc in docs:
+                print(f'{doc.id} => {doc.to_dict()}')
+
+        # TODO: render chunks
+
+        print("entered mainpage")
         # GET data from firestore
         history_ref = db.collection(u"Users").document(
             USER_EMAIL).collection(u"History")
@@ -529,7 +605,6 @@ class MainPage(Screen):
         self.ids.username_input.text = user['username']
         self.ids.description_input.text = user['description']
 
-        self.ids.main_map.center_on(currentlat, currentlon)
         marker = MapMarkerPopup(
             lat=1.3784949677817633, lon=103.76313504803471)
         marker.add_widget(
