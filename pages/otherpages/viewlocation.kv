@@ -9,18 +9,20 @@
       left_action_items: [['arrow-left', lambda x: app.back_homepage()]]
 
     MDLabel:
+      id: location_name
       font_size: 40
       bold: True
       text: "Hillion residences"
       padding: (20,20)
 
     MDLabel:
+      id: location_description
       font_size: 20
       text: "Lorem ipsum sed felis eget velit aliquet sagittis id consectetur purus ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt vitae."
       padding: (20,20)
 
     MapView:
-      id: add_location_map
+      id: view_location_map
       double_tap_zoom: True
       # size: min(root.height, root.width), min(root.height, root.width)
       on_lat: print('lat:', self.lat)

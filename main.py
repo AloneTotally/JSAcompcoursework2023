@@ -44,6 +44,7 @@ USER_EMAIL = ""
 photo_path = f""
 history_data = {}
 history_items = []
+location_data = {}
 
 
 class LoginScreen(Screen):
@@ -240,6 +241,9 @@ class AddLocationScreen_2(Screen):
         self.ids["take_photo"] = take_photo
 
     def submit_new_location(self):
+        if self.ids.location_description.text == "":
+            Snackbar(text="No description provided.").open()
+            return
 
         if photo_path == "":
             Snackbar(text="No picture is uploaded.").open()
@@ -279,6 +283,7 @@ class AddLocationScreen_2(Screen):
             "location_name": addlocation_1_ref.ids.location_name.text,
             "is_mall": addlocation_1_ref.ids.in_mall.active,
             "location_coords": location_coords,
+            "description": self.ids.location_description.text,
             "photoURL": url,
             "chunk": chunk,
             "1starcount": 0,
@@ -300,6 +305,8 @@ class AddLocationScreen_2(Screen):
         print(user_ans_dict)
         # db.collection(u'Chunks').document(name).set(user_ans_dict)
         print("location set!")
+        self.manager.current = 'mainpage'
+        self.manager.transition.direction = 'right'
 
     def on_pre_enter(self):
         self.ids.camera.play = True
@@ -456,7 +463,17 @@ class HistoryItemScreen(Screen):
 
 
 class ViewLocation(Screen):
-    pass
+    def on_enter(self, *args):
+        global location_data
+        print(location_data)
+        self.ids.location_description = location_data['description']
+        self.ids.location_name = location_data['location_name']
+        self.ids.view_location_map.center_on(location_data['location_coords'])
+        self.ids.view_location_map.add_widget(
+            MapMarker(location_data['location_coords']
+                      [0], location_data['location_coords'][1])
+        )
+        return super().on_pre_enter(*args)
 
 
 class ReviewsPage(Screen):
@@ -507,8 +524,12 @@ class MainPage(Screen):
             round(coords[1]+0.01, 2)
         )
 
-    def view_location(self):
+    def view_location(self, locationdata):
+        global location_data
+        location_data = locationdata
+        print(location_data)
         print("view_location has been run")
+
         self.manager.current = "viewlocation"
         self.manager.transition.direction = "left"
 
@@ -571,10 +592,25 @@ class MainPage(Screen):
             # doc = chunk_ref.document(str(i)).get()
             # if doc.exists:
             chunk_locations_ref = chunk_ref.document(
-                str(i)).collection('locations')
+                str(i)).collection(u'Locations')
             docs = chunk_locations_ref.stream()
             for doc in docs:
+                locationdata = doc.to_dict()
                 print(f'{doc.id} => {doc.to_dict()}')
+                marker = MapMarkerPopup(
+                    lat=locationdata['location_coords'][0],
+                    lon=locationdata['location_coords'][1]
+                )
+                marker.add_widget(
+                    MDRoundFlatButton(
+                        text=locationdata['location_name'],
+                        md_bg_color=[0.24705882352941178,
+                                     0.3176470588235294, 0.7098039215686275, 1.0],
+                        text_color=[1, 1, 1, 1],
+                        on_press=lambda x: self.view_location(locationdata)
+                    )
+                )
+                self.ids.main_map.add_widget(marker)
 
         # TODO: render chunks
 
@@ -605,18 +641,18 @@ class MainPage(Screen):
         self.ids.username_input.text = user['username']
         self.ids.description_input.text = user['description']
 
-        marker = MapMarkerPopup(
-            lat=1.3784949677817633, lon=103.76313504803471)
-        marker.add_widget(
-            MDRoundFlatButton(
-                text="python button",
-                md_bg_color=[0.24705882352941178,
-                             0.3176470588235294, 0.7098039215686275, 1.0],
-                text_color=[1, 1, 1, 1],
-                on_press=lambda x: self.view_location()
-            )
-        )
-        self.ids.main_map.add_widget(marker)
+        # marker = MapMarkerPopup(
+        #     lat=1.3784949677817633, lon=103.76313504803471)
+        # marker.add_widget(
+        #     MDRoundFlatButton(
+        #         text="python button",
+        #         md_bg_color=[0.24705882352941178,
+        #                      0.3176470588235294, 0.7098039215686275, 1.0],
+        #         text_color=[1, 1, 1, 1],
+        #         on_press=lambda x: self.view_location()
+        #     )
+        # )
+        # self.ids.main_map.add_widget(marker)
 
 
 # class WindowManager(ScreenManager):
