@@ -276,7 +276,7 @@ class AddLocationScreen_2(Screen):
         lat = round(int(location_coords[0] * 50) / 50 + 0.01, 2)
         lon = round(int(location_coords[1] * 50) / 50 + 0.01, 2)
         chunk = (lat, lon)
-
+        print(self.ids.location_description.text)
         user_ans_dict = {
             "opening_time": addlocation_1_ref.ids.opening_time.text,
             "closing_time": addlocation_1_ref.ids.closing_time.text,
@@ -437,12 +437,12 @@ class HistoryItemScreen(Screen):
         # using ids to store a number
         self.ids["starnum"] = star
 
-    def on_pre_enter(self, *args):
+    def on_enter(self, *args):
         global history_data
         print("Entered historyitem: ", history_data)
-        self.ids.location_name = history_data['restaurant_name']
-        self.ids.location_name_review = history_data['restaurant_name']
-        self.ids.eaten_time = "Eaten at: " + str(history_data['time'])
+        self.ids.location_name.text = history_data['restaurant_name']
+        self.ids.location_name_review.text = history_data['restaurant_name']
+        self.ids.eaten_time.text = "Eaten at: " + str(history_data['time'])
         self.ids.historyitem_map.lat = currentlat
         self.ids.historyitem_map.lon = currentlon
         # TODO: SET BBOX
@@ -466,12 +466,17 @@ class ViewLocation(Screen):
     def on_enter(self, *args):
         global location_data
         print(location_data)
-        self.ids.location_description = location_data['description']
-        self.ids.location_name = location_data['location_name']
-        self.ids.view_location_map.center_on(location_data['location_coords'])
+        self.ids.location_description.text = location_data['description']
+        self.ids.location_name.text = location_data['location_name']
+        self.ids.view_location_map.center_on(
+            location_data['location_coords'][0],
+            location_data['location_coords'][1]
+        )
         self.ids.view_location_map.add_widget(
-            MapMarker(location_data['location_coords']
-                      [0], location_data['location_coords'][1])
+            MapMarker(
+                lat=location_data['location_coords'][0],
+                lon=location_data['location_coords'][1]
+            )
         )
         return super().on_pre_enter(*args)
 
@@ -524,9 +529,10 @@ class MainPage(Screen):
             round(coords[1]+0.01, 2)
         )
 
-    def view_location(self, locationdata):
+    def view_location(self, instance):
+        print(dir(instance))
         global location_data
-        location_data = locationdata
+        location_data = instance.location_data
         print(location_data)
         print("view_location has been run")
 
@@ -548,10 +554,12 @@ class MainPage(Screen):
         user[u'description'] = new_profile_dict[u"description"]
         print(user)
 
-    def to_historyitem(self, data):
+    def to_historyitem(self, instance):
+        print(dir(instance))
         global history_data
-        history_data = data
+        history_data = instance.history_data
         print(history_data)
+
         self.manager.current = "historyitem"
         self.manager.transition.direction = "left"
 
@@ -596,20 +604,21 @@ class MainPage(Screen):
             docs = chunk_locations_ref.stream()
             for doc in docs:
                 locationdata = doc.to_dict()
-                print(f'{doc.id} => {doc.to_dict()}')
+                print(f'\n{doc.id} => {locationdata}')
                 marker = MapMarkerPopup(
                     lat=locationdata['location_coords'][0],
                     lon=locationdata['location_coords'][1]
                 )
-                marker.add_widget(
-                    MDRoundFlatButton(
-                        text=locationdata['location_name'],
-                        md_bg_color=[0.24705882352941178,
-                                     0.3176470588235294, 0.7098039215686275, 1.0],
-                        text_color=[1, 1, 1, 1],
-                        on_press=lambda x: self.view_location(locationdata)
-                    )
+                button = MDRoundFlatButton(
+                    text=locationdata['location_name'],
+                    md_bg_color=[0.24705882352941178,
+                                 0.3176470588235294, 0.7098039215686275, 1.0],
+                    text_color=[1, 1, 1, 1],
+                    # on_release=lambda x: self.view_location(locationdata)
+                    on_release=self.view_location
                 )
+                button.location_data = locationdata
+                marker.add_widget(button)
                 self.ids.main_map.add_widget(marker)
 
         # TODO: render chunks
@@ -620,14 +629,14 @@ class MainPage(Screen):
             USER_EMAIL).collection(u"History")
         docs = history_ref.stream()
         global history_items
-        count = -1
         for doc in docs:
-            count += 1
             historyitemdata = doc.to_dict()
             listitem = TwoLineAvatarIconListItem(
                 text=historyitemdata["restaurant_name"],
                 secondary_text=historyitemdata["time"],
-                on_release=lambda x: self.to_historyitem(historyitemdata))
+                on_release=self.to_historyitem)
+
+            listitem.history_data = historyitemdata
             # TODO: add a date to the widget
             if historyitemdata not in history_items:
                 history_items.append(historyitemdata)
