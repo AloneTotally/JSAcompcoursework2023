@@ -1,3 +1,4 @@
+import requests
 import geocoder
 import os
 import datetime
@@ -44,7 +45,7 @@ USER_EMAIL = ""
 photo_path = f""
 history_data = {}
 history_items = []
-location_data = {}
+locations_data = []
 
 
 class LoginScreen(Screen):
@@ -466,19 +467,46 @@ class ViewLocation(Screen):
     def on_enter(self, *args):
         global location_data
         print(location_data)
-        self.ids.location_description.text = location_data['description']
+        if 'description' in location_data:
+            self.ids.location_description.text = location_data['description']
+        else:
+            self.ids.location_description.text = "No description provided"
         self.ids.location_name.text = location_data['location_name']
+        response = requests.get(
+            'https://storage.googleapis.com/foodie-804d6.appspot.com/anothertesthome%20%281.4361269855494074%2C103.79406624619538%29'
+        )
+        if response.status_code:
+            with open('./location.png', 'wb') as fp:
+                fp.write(response.content)
+                self.ids.location_image.source = './location.png'
+
         self.ids.view_location_map.center_on(
             location_data['location_coords'][0],
             location_data['location_coords'][1]
         )
-        self.ids.view_location_map.add_widget(
-            MapMarker(
-                lat=location_data['location_coords'][0],
-                lon=location_data['location_coords'][1]
-            )
+        locationmapmarker = MapMarker(
+            lat=location_data['location_coords'][0],
+            lon=location_data['location_coords'][1],
         )
+        self.ids['mapmarker'] = locationmapmarker
+        self.ids.view_location_map.add_widget(locationmapmarker)
+
+        total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
+            location_data['3starcount'] + \
+            location_data['4starcount'] + location_data['5starcount']
+        self.ids.review_count.text = f"{total_reviews} Reviews"
+        self.ids.rating.text = str(round(total_reviews / 5, 1))
+        self.ids.rating_one.value = location_data['1starcount']
+        self.ids.rating_two.value = location_data['2starcount']
+        self.ids.rating_three.value = location_data['3starcount']
+        self.ids.rating_four.value = location_data['4starcount']
+        self.ids.rating_five.value = location_data['5starcount']
+
         return super().on_pre_enter(*args)
+
+    def on_leave(self, *args):
+        self.ids.view_location_map.remove_widget(self.ids['mapmarker'])
+        os.remove('./location.png')
 
 
 class ReviewsPage(Screen):
@@ -604,6 +632,8 @@ class MainPage(Screen):
             docs = chunk_locations_ref.stream()
             for doc in docs:
                 locationdata = doc.to_dict()
+                global locations_data
+                locations_data.append(locationdata)
                 print(f'\n{doc.id} => {locationdata}')
                 marker = MapMarkerPopup(
                     lat=locationdata['location_coords'][0],
@@ -620,6 +650,7 @@ class MainPage(Screen):
                 button.location_data = locationdata
                 marker.add_widget(button)
                 self.ids.main_map.add_widget(marker)
+                print("widget added")
 
         # TODO: render chunks
 
