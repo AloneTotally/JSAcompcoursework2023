@@ -46,6 +46,9 @@ photo_path = f""
 history_data = {}
 history_items = []
 locations_data = []
+# this is to stop the same photo from
+# reappearing when viewing the location
+location_count = 0
 
 
 class LoginScreen(Screen):
@@ -66,7 +69,7 @@ class LoginScreen(Screen):
             #          button_text="BUTTON", button_callback=lambda: self.callback).show()
             Snackbar(text="One of the fields is not filled.").open()
             return
-        password_correct = True
+        userinfo_valid = True
 
         try:
             # User exists
@@ -76,10 +79,14 @@ class LoginScreen(Screen):
             user_db_ref = db.collection(u'Users').document(USER_EMAIL)
             newuserdata = user_db_ref.get()
             if newuserdata.exists:
-                if userdata['password'] != newuserdata.to_dict()['password']:
+                tempuserdata = newuserdata.to_dict()
+                if userdata['password'] != tempuserdata['password']:
                     Snackbar(text="Password incorrect.").open()
-                    password_correct = False
-                userdata = newuserdata.to_dict()
+                    userinfo_valid = False
+                elif userdata['username'] != tempuserdata['username']:
+                    Snackbar(text="Username incorrect.").open()
+                    userinfo_valid = False
+                userdata = tempuserdata
                 print(userdata)
             else:
                 raise Exception("user does not exist")
@@ -99,7 +106,7 @@ class LoginScreen(Screen):
         finally:
             # Go to main page
             # storing the user in the ids part
-            if not password_correct:
+            if not userinfo_valid:
                 return
             self.ids["user"] = userdata
             self.manager.current = "mainpage"
@@ -203,7 +210,8 @@ class AddLocationScreen_2(Screen):
         )  # remove camera widget
         photo_path = f"./location{num}.png"
         print(photo_path)
-        location_image = Image(source=f"./location{num}.png")
+        location_image = Image(
+            source=f"./location{num}.png", allow_stretch=True)
         self.ids.camerawrapper.add_widget(
             location_image)  # add image widget
         self.ids["location_image"] = location_image
@@ -317,10 +325,41 @@ class AddLocationScreen_2(Screen):
         self.ids.camera.play = False
 
 
+selected_mapmarker = None
+
+
 class AddHistoryItemScreen(Screen):
-    def on_pre_enter(self):
-        mapview = self.ids.addhistoryitem_map
-        mapview.on_touch_down = self.on_touch_map
+    def on_pre_enter(self, *args):
+        self.ids.addhistoryitem_map.lat = currentlat
+        self.ids.addhistoryitem_map.lon = currentlon
+        # self.ids.addhistoryitem_map.on_touch_down = self.on_touch_map
+        return super().on_pre_enter(*args)
+
+    def on_enter(self):
+        # TODO: DOESNT WORK NJKGUYJCFTYCJFYUK
+        # mapview = self.ids.addhistoryitem_map
+        global locations_data
+        print(locations_data)
+        for i in locations_data:
+            mapmarker = MapMarker(
+                lat=i[0],
+                lon=i[1],
+                on_press=self.mapmarker_pressed,
+            )
+            print(str(i))
+            self.ids[str(i)] = mapmarker
+            self.ids.addhistoryitem_map.add_marker(mapmarker)
+
+    def mapmarker_pressed(self, instance):
+        coords = [instance.lat, instance.lon]
+        print(coords)
+        print("Source: "+self.ids[str(coords)].source)
+        # TODO: doesnt work yet D:
+        self.ids[str(coords)].source = 'green_mapmarker.png'
+        global selected_mapmarker
+        if selected_mapmarker in self.ids.keys():
+            self.ids[selected_mapmarker].source = '/Users/alonzopuah/Documents/GitHub/JSAcompcoursework2023/.env/lib/python3.10/site-packages/kivy_garden/mapview/icons/marker.png'
+        selected_mapmarker = str(coords)
 
     def show_date_picker(self):
         date_dialog = MDDatePicker()
@@ -473,12 +512,15 @@ class ViewLocation(Screen):
             self.ids.location_description.text = "No description provided"
         self.ids.location_name.text = location_data['location_name']
         response = requests.get(
-            'https://storage.googleapis.com/foodie-804d6.appspot.com/anothertesthome%20%281.4361269855494074%2C103.79406624619538%29'
+            location_data['photoURL']
         )
         if response.status_code:
-            with open('./location.png', 'wb') as fp:
+            global location_count
+            photo_path = f"./location{location_count}.png"
+            with open(photo_path, 'wb') as fp:
                 fp.write(response.content)
-                self.ids.location_image.source = './location.png'
+            self.ids.location_image.source = photo_path
+            location_count += 1
 
         self.ids.view_location_map.center_on(
             location_data['location_coords'][0],
@@ -505,8 +547,9 @@ class ViewLocation(Screen):
         return super().on_pre_enter(*args)
 
     def on_leave(self, *args):
+        self.ids.location_image.source = ''
         self.ids.view_location_map.remove_widget(self.ids['mapmarker'])
-        os.remove('./location.png')
+        os.remove(f"./location{location_count-1}.png")
 
 
 class ReviewsPage(Screen):
@@ -633,7 +676,7 @@ class MainPage(Screen):
             for doc in docs:
                 locationdata = doc.to_dict()
                 global locations_data
-                locations_data.append(locationdata)
+                locations_data.append(locationdata['location_coords'])
                 print(f'\n{doc.id} => {locationdata}')
                 marker = MapMarkerPopup(
                     lat=locationdata['location_coords'][0],
