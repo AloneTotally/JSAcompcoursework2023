@@ -33,3 +33,4 @@ App/program that helps you decide what to eat judging by the locations near you 
 - If this command does not work and returns something like `virtualenv: command not found`, run `pip uninstall virtualenv` then `pip install virtualenv`
 
 5. To run the project, run `python3 main.py` and the app will start building
+
