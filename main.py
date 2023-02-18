@@ -14,6 +14,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.pickers import MDTimePicker
 from kivymd.uix.list import TwoLineAvatarIconListItem
+from kivymd.uix.label import MDLabel
 
 # from kivy.uix.image import AsyncImage
 from kivy.uix.camera import Camera
@@ -333,7 +334,6 @@ class AddHistoryItemScreen(Screen):
         self.ids.addhistoryitem_map.lat = currentlat
         self.ids.addhistoryitem_map.lon = currentlon
         # self.ids.addhistoryitem_map.on_touch_down = self.on_touch_map
-        return super().on_pre_enter(*args)
 
     def on_enter(self):
         # TODO: DOESNT WORK NJKGUYJCFTYCJFYUK
@@ -354,12 +354,15 @@ class AddHistoryItemScreen(Screen):
         coords = [instance.lat, instance.lon]
         print(coords)
         print("Source: "+self.ids[str(coords)].source)
-        # TODO: doesnt work yet D:
+        self.ids[str(coords)].source = ''
         self.ids[str(coords)].source = 'green_mapmarker.png'
         global selected_mapmarker
+        print("Selected mapmarker:", selected_mapmarker)
+        print("Keys in self.ids:", self.ids.keys())
         if selected_mapmarker in self.ids.keys():
             self.ids[selected_mapmarker].source = '/Users/alonzopuah/Documents/GitHub/JSAcompcoursework2023/.env/lib/python3.10/site-packages/kivy_garden/mapview/icons/marker.png'
         selected_mapmarker = str(coords)
+        print("selected_mapmarker in self.ids.keys()")
 
     def show_date_picker(self):
         date_dialog = MDDatePicker()
@@ -378,50 +381,65 @@ class AddHistoryItemScreen(Screen):
     def get_time(self, instance, time):
         self.ids.time_input.text = str(time)
 
-    def on_touch_map(self, touch):
-        bbox = self.ids.addhistoryitem_map.get_bbox()
+    # def on_touch_map(self, touch):
+    #     bbox = self.ids.addhistoryitem_map.get_bbox()
 
-        # finding lat and lon on the map
-        lat, lon = self.ids.addhistoryitem_map.get_latlon_at(touch.x, touch.y)
-        lat, lon = lat - 0.0002737344, lon - 0.000263021
-        if self.width < 650:
-            lat -= 0.0000053673
-            lon += 0.0001235686
+    #     # finding lat and lon on the map
+    #     lat, lon = self.ids.addhistoryitem_map.get_latlon_at(touch.x, touch.y)
+    #     lat, lon = lat - 0.0002737344, lon - 0.000263021
+    #     if self.width < 650:
+    #         lat -= 0.0000053673
+    #         lon += 0.0001235686
 
-        # TODO: works on computer sized screen but on phone is gg
-        marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
-        if not marker_within_mapview:
-            return
-        print("Tapped on", lat, lon)
-        # putting the mapmarker
-        marker = MapMarker(lat=lat, lon=lon)
-        if self.ids.get("mapmarker") == None:
-            self.ids.addhistoryitem_map.add_marker(marker)
-            self.ids["mapmarker"] = marker
-        else:
-            self.ids.addhistoryitem_map.remove_widget(
-                self.ids["mapmarker"]
-            )
-            self.ids.addhistoryitem_map.add_marker(marker)
-            self.ids["mapmarker"] = marker
+    #     marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
+    #     if not marker_within_mapview:
+    #         return
+    #     print("Tapped on", lat, lon)
+    #     # putting the mapmarker
+    #     marker = MapMarker(lat=lat, lon=lon)
+    #     if self.ids.get("mapmarker") == None:
+    #         self.ids.addhistoryitem_map.add_marker(marker)
+    #         self.ids["mapmarker"] = marker
+    #     else:
+    #         self.ids.addhistoryitem_map.remove_widget(
+    #             self.ids["mapmarker"]
+    #         )
+    #         self.ids.addhistoryitem_map.add_marker(marker)
+    #         self.ids["mapmarker"] = marker
 
     def submit_history_item(self):
-        location_coords = []
-        try:
-            location_coords = [
-                self.ids["mapmarker"].lat,
-                self.ids["mapmarker"].lon
-            ]
-        except Exception:
+        global selected_mapmarker
+        if selected_mapmarker == None:
             Snackbar(text="Location not selected.").open()
             return
         # sg_tz = pytz.timezone("Singapore")
         # current_time = datetime.now(sg_tz)
+        # name of document
         date_time = self.ids.date_input.text + "," + self.ids.time_input.text
+        local_selected_mapmarker = [
+            float(x) for x in selected_mapmarker[1:-1].split(',')
+        ]
+        print("selected mapmarker:", local_selected_mapmarker)
+        # finding current chunk
+        current_chunk = self.manager.get_screen(
+            'mainpage').convert_to_bbox(local_selected_mapmarker)
+        print("current_chunk:", current_chunk)
+
+        location_ref = db.collection(u"Chunks").document(str(current_chunk)).collection(
+            u"Locations").where(u'location_coords', u'==', local_selected_mapmarker)
+        # this locations variable is actually just one location
+        locations = location_ref.stream()
+        location_name = ''
+        # for loop only runs once
+        for doc in locations:
+            location = doc.to_dict()
+            print("Location_dict: ", location)
+            location_name = location['location_name']
+        print("Location_name:", location_name)
         user_ans_dict = {
-            'restaurant_name': self.ids.restaurant_name.text,
+            'restaurant_name': location_name,
             # 'Date_of_consumption': self.ids.date.text,
-            'location_coords': location_coords,
+            'location_coords': local_selected_mapmarker,
             'date': self.ids.date_input.text,
             'time': self.ids.time_input.text,
             'servertimestamp': SERVER_TIMESTAMP
@@ -438,9 +456,12 @@ class AddHistoryItemScreen(Screen):
         print(historyitem_ref)
         print(USER_EMAIL, date_time)
         historyitem_ref.set(user_ans_dict)
+        self.manager.current = 'mainpage'
+        self.manager.transition.direction = 'left'
 
 
 class HistoryItemScreen(Screen):
+    starcount = 0
 
     def click_star(self, star):
         if star == 1:
@@ -474,20 +495,28 @@ class HistoryItemScreen(Screen):
             self.ids.star_five.text_color = "#f6ae00"
             self.ids.star_five.text_color = "#f6ae00"
 
-        # using ids to store a number
-        self.ids["starnum"] = star
+        # using self to store a number
+        self.starcount = star
 
     def on_enter(self, *args):
         global history_data
+        print("Keys of ids:", self.ids.keys())
         print("Entered historyitem: ", history_data)
+        # storing info about the history item which will be used in reviews
+        self.history_chunk = self.manager.get_screen(
+            'mainpage').convert_to_bbox(history_data['location_coords'])
+        self.history_name = history_data['restaurant_name']
+
+        # changing ui
         self.ids.location_name.text = history_data['restaurant_name']
         self.ids.location_name_review.text = history_data['restaurant_name']
         self.ids.eaten_time.text = "Eaten at: " + str(history_data['time'])
-        self.ids.historyitem_map.lat = currentlat
-        self.ids.historyitem_map.lon = currentlon
+        self.ids.historyitem_map.center_on(
+            history_data['location_coords'][0], history_data['location_coords'][1])
         # TODO: SET BBOX
         marker = MapMarkerPopup(
             lat=history_data['location_coords'][0], lon=history_data['location_coords'][1])
+        self.ids['mapmarker'] = marker
         self.ids.historyitem_map.add_widget(marker)
         # self.ids.num_reviews = "Reviews"
 
@@ -496,10 +525,33 @@ class HistoryItemScreen(Screen):
     def submit_review(self):
         user_review_dict = {
             u"review": self.ids.review.text,
-            u"rating": self.ids["starnum"]
+            u"rating": self.starcount,
+            u'servertimestamp': SERVER_TIMESTAMP
         }
-        # TODO: SEND REQUEST
         print(user_review_dict)
+
+        sg_tz = pytz.timezone("Singapore")
+        current_time = str(datetime.now(sg_tz))
+
+        if len(user_review_dict[u"review"]) > 100:
+            Snackbar(text="Review too long.").open()
+            return
+        elif self.starcount == 0:
+            Snackbar(text="Rating not filled.").open()
+            return
+        elif user_review_dict[u"review"] == "":
+            Snackbar(text="Review not filled.").open()
+            return
+
+        review_ref = db.collection('Chunks').document(str(self.history_chunk)).collection(
+            'Locations').document(self.history_name).collection('Reviews')
+        review_ref.document(current_time).set(user_review_dict)
+
+        self.manager.current = 'mainpage'
+        self.manager.transition.direction = 'right'
+
+    def on_leave(self):
+        self.ids.historyitem_map.remove_widget(self.ids['mapmarker'])
 
 
 class ViewLocation(Screen):
@@ -593,11 +645,11 @@ class ReviewItemScreen(Screen):
 
 class MainPage(Screen):
     def convert_to_bbox(self, coords):
+        bottom_lat = round(int(coords[0] * 50) / 50, 2)
+        bottom_lon = round(int(coords[1] * 50) / 50, 2)
         return (
-            round(coords[0]-0.01, 2),
-            round(coords[1]-0.01, 2),
-            round(coords[0]+0.01, 2),
-            round(coords[1]+0.01, 2)
+            round(bottom_lat + 0.01, 2),
+            round(bottom_lon + 0.01, 2)
         )
 
     def view_location(self, instance):
@@ -703,6 +755,7 @@ class MainPage(Screen):
             USER_EMAIL).collection(u"History")
         docs = history_ref.stream()
         global history_items
+        currentdate = ''
         for doc in docs:
             historyitemdata = doc.to_dict()
             listitem = TwoLineAvatarIconListItem(
@@ -714,11 +767,34 @@ class MainPage(Screen):
             # TODO: add a date to the widget
             if historyitemdata not in history_items:
                 history_items.append(historyitemdata)
+                if historyitemdata['date'] != currentdate:
+                    datelabel = MDLabel(
+                        padding=(20, 0),
+                        text=historyitemdata['date'],
+                        font_size=50,
+                        bold=True
+                    )
+                    # self.ids.historylist is the history wrapper
+                    self.ids.historylist.add_widget(datelabel)
+                    currentdate = historyitemdata['date']
                 self.ids.historylist.add_widget(listitem)
-            # self.ids.historylist is the history wrapper
-
+            # making currentdate something other than ''
+            currentdate = 'currentdate'
             history_items.append(historyitemdata)
             print(historyitemdata)
+        if 'nohistorylabel' in self.ids.keys():
+            self.ids.historylist.remove_widget(self.ids['nohistorylabel'])
+            # making currentdate something other than ''
+            currentdate = 'currentdate'
+        if currentdate == '':
+            nohistorylabel = MDLabel(
+                halign='center',
+                text="No history yet",
+                pos_hint={'center_x': 0.5, 'center_y': 0.5}
+            )
+            self.ids.historylist.add_widget(nohistorylabel)
+            self.ids['nohistorylabel'] = nohistorylabel
+
         user = self.manager.get_screen('login').ids['user']
         print(user)
         self.ids.username_input.text = user['username']

@@ -34,3 +34,6 @@ App/program that helps you decide what to eat judging by the locations near you 
 
 5. To run the project, run `python3 main.py` and the app will start building
 
+> Note: There are some problems in the app which made need the app to rerun (I have no idea why, its just like that)
+
+- One example is the add history item screen, where the green mapmarker would appear over the old mapmarker (After reloading the green mapmarker would replace the old mapmarker)
