@@ -573,7 +573,7 @@ class HistoryItemScreen(Screen):
         elif user_review_dict[u"review"] == "":
             Snackbar(text="Review not filled.").open()
             return
-
+        # TODO: add to reviewcount
         review_ref = db.collection('Chunks').document(str(self.history_chunk)).collection(
             'Locations').document(self.history_name).collection('Reviews')
         review_ref.document(current_time).set(user_review_dict)
