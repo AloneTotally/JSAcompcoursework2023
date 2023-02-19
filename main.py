@@ -211,6 +211,19 @@ class AddLocationScreen_2(Screen):
         )  # remove camera widget
         photo_path = f"./location{num}.png"
         print(photo_path)
+
+        import cv2
+
+        img = cv2.imread(photo_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+        contours, hierarchy = cv2.findContours(
+            thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnt = contours[0]
+        x, y, w, h = cv2.boundingRect(cnt)
+        crop = img[y:y+h, x:x+w]
+        cv2.imwrite(photo_path, crop)
+
         location_image = Image(
             source=f"./location{num}.png", allow_stretch=True)
         self.ids.camerawrapper.add_widget(
@@ -277,6 +290,22 @@ class AddLocationScreen_2(Screen):
         url = blob.public_url
         print(url)
 
+        from PIL import Image
+
+        basewidth = 80
+        img = Image.open(photo_path)
+        wpercent = (basewidth / float(img.size[0]))
+        hsize = int((float(img.size[1]) * float(wpercent)))
+        img = img.resize((basewidth, hsize), Image.ANTIALIAS)
+        img.save(photo_path)
+
+        name = f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)}) (smaller)"
+        blob = bucket.blob(name)
+        blob.upload_from_filename(photo_path)
+
+        blob.make_public()
+        small_url = blob.public_url
+
         os.remove(photo_path)
 
         # finding midpoint in chunk
@@ -295,6 +324,7 @@ class AddLocationScreen_2(Screen):
             "location_coords": location_coords,
             "description": self.ids.location_description.text,
             "photoURL": url,
+            "smallphotoURL": small_url,
             "chunk": chunk,
             "1starcount": 0,
             "2starcount": 0,
@@ -341,13 +371,14 @@ class AddHistoryItemScreen(Screen):
         global locations_data
         print(locations_data)
         for i in locations_data:
+            print(f"{i['location_name']}.png")
             mapmarker = MapMarker(
-                lat=i[0],
-                lon=i[1],
+                lat=i['location_coords'][0],
+                lon=i['location_coords'][1],
                 on_press=self.mapmarker_pressed,
             )
-            print(str(i))
-            self.ids[str(i)] = mapmarker
+            print(str(i['location_coords']))
+            self.ids[str(i['location_coords'])] = mapmarker
             self.ids.addhistoryitem_map.add_marker(mapmarker)
 
     def mapmarker_pressed(self, instance):
@@ -685,11 +716,11 @@ class MainPage(Screen):
 
         self.manager.current = "historyitem"
         self.manager.transition.direction = "left"
+    images_list = []
+    loaded_chunks = []
+    coords = []
 
-    def on_enter(self):
-        self.ids.main_map.center_on(currentlat, currentlon)
-        # TODO: comment out this later
-        # self.ids.main_map.center_on(1.31, 103.85)
+    def load_locations(self):
         bbox = self.ids.main_map.get_bbox()
         bottom_lat = round(int(bbox[0] * 50) / 50, 2)
         bottom_lon = round(int(bbox[1] * 50) / 50, 2)
@@ -713,41 +744,64 @@ class MainPage(Screen):
         print(arr_coords)
         # Sending request
         chunk_ref = db.collection(u"Chunks")
-        # chunk_ref = chunk_ref.where(u'chunk', u'in', arr_coords)
-        # docs = chunk_ref.stream()
-        # # print(docs)
-        # for doc in docs:
-        #     print(f'{doc.id} => {doc.to_dict()}')
-        #     print(dir(doc.get))
+        location_num = 0
         for i in arr_coords:
             # doc = chunk_ref.document(str(i)).get()
             # if doc.exists:
-            chunk_locations_ref = chunk_ref.document(
-                str(i)).collection(u'Locations')
-            docs = chunk_locations_ref.stream()
-            for doc in docs:
-                locationdata = doc.to_dict()
-                global locations_data
-                locations_data.append(locationdata['location_coords'])
-                print(f'\n{doc.id} => {locationdata}')
-                marker = MapMarkerPopup(
-                    lat=locationdata['location_coords'][0],
-                    lon=locationdata['location_coords'][1]
-                )
-                button = MDRoundFlatButton(
-                    text=locationdata['location_name'],
-                    md_bg_color=[0.24705882352941178,
-                                 0.3176470588235294, 0.7098039215686275, 1.0],
-                    text_color=[1, 1, 1, 1],
-                    # on_release=lambda x: self.view_location(locationdata)
-                    on_release=self.view_location
-                )
-                button.location_data = locationdata
-                marker.add_widget(button)
-                self.ids.main_map.add_widget(marker)
-                print("widget added")
+            if i not in self.loaded_chunks:
+                self.loaded_chunks.append(i)
+                chunk_locations_ref = chunk_ref.document(
+                    str(i)).collection(u'Locations')
+                docs = chunk_locations_ref.stream()
+                for doc in docs:
+                    locationdata = doc.to_dict()
+                    global locations_data
+                    # locations_data.append(locationdata['location_coords'])
+                    locations_data.append(locationdata)
+                    print(f'\n{doc.id} => {locationdata}')
 
-        # TODO: render chunks
+                    # Get image
+                    if 'smallphotoURL' in locationdata.keys():
+                        response = requests.get(
+                            locationdata['smallphotoURL']
+                        )
+                        location_path = ""
+                        if response.status_code:
+                            location_path = f"./cache/location{locationdata['location_name']}.png"
+                            with open(location_path, 'wb') as fp:
+                                fp.write(response.content)
+                        if location_path not in self.images_list:
+                            self.images_list.append(location_path)
+
+                        marker = MapMarkerPopup(
+                            lat=locationdata['location_coords'][0],
+                            lon=locationdata['location_coords'][1],
+                            source=location_path
+                        )
+                    else:
+                        marker = MapMarkerPopup(
+                            lat=locationdata['location_coords'][0],
+                            lon=locationdata['location_coords'][1],
+                        )
+                    button = MDRoundFlatButton(
+                        text=locationdata['location_name'],
+                        md_bg_color=[0.24705882352941178,
+                                     0.3176470588235294, 0.7098039215686275, 1.0],
+                        text_color=[1, 1, 1, 1],
+                        # on_release=lambda x: self.view_location(locationdata)
+                        on_release=self.view_location
+                    )
+                    button.location_data = locationdata
+                    marker.add_widget(button)
+                    self.ids.main_map.add_widget(marker)
+                    print("widget added")
+
+    def on_enter(self):
+        if self.ids.main_map.lon == 0 and self.ids.main_map.lat == 0:
+            self.ids.main_map.center_on(currentlat, currentlon)
+        # TODO: comment out this later
+        # self.ids.main_map.center_on(1.31, 103.85)
+        self.load_locations()
 
         print("entered mainpage")
         # GET data from firestore
@@ -800,18 +854,14 @@ class MainPage(Screen):
         self.ids.username_input.text = user['username']
         self.ids.description_input.text = user['description']
 
-        # marker = MapMarkerPopup(
-        #     lat=1.3784949677817633, lon=103.76313504803471)
-        # marker.add_widget(
-        #     MDRoundFlatButton(
-        #         text="python button",
-        #         md_bg_color=[0.24705882352941178,
-        #                      0.3176470588235294, 0.7098039215686275, 1.0],
-        #         text_color=[1, 1, 1, 1],
-        #         on_press=lambda x: self.view_location()
-        #     )
-        # )
-        # self.ids.main_map.add_widget(marker)
+    # def on_leave(self):
+    #     print(self.images_list)
+    #     for i in self.images_list:
+    #         try:
+    #             os.remove(i)
+    #         except Exception:
+    #             print(Exception)
+    #             pass
 
 
 # class WindowManager(ScreenManager):

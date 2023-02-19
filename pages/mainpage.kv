@@ -46,6 +46,7 @@
               double_tap_zoom: True
               # size: min(root.height, root.width), min(root.height, root.width)
               size: 100, 100
+              on_touch_up: app.root.current_screen.load_locations()
               # on_lat: print('lat:', self.lat)
               # on_lon: print('lon:', self.lon)
               # lon: 103.76313504803471
