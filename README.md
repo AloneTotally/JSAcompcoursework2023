@@ -21,6 +21,8 @@ App/program that helps you decide what to eat judging by the locations near you 
 
 ## How to set up project
 
+> f-strings are used, so python 3.6 minimum for this project to work
+
 ### If the terminal is not already activated,
 
 1. Open the project in whatever code editor you like, and open the terminal. You should have python installed for this

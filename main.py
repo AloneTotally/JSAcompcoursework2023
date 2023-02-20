@@ -38,18 +38,28 @@ firebase_admin.initialize_app(cred, {
 })
 # intitialise firestore
 db = firestore.client()
-
+# finds an approximate of the user's location using ip address of user
 g = geocoder.ip('me')
 currentlat, currentlon = g.latlng
 print(g.latlng)
 
 USER_EMAIL = ""
 user_name = ""
+# used to store photo when adding location
 photo_path = f""
-history_data = {}
+
+# used to store the history info to prevent the
+# same history info from appearing again when database is queried again
 history_items = []
+# Used to store data of an history item when going to another page
+history_data = {}
+
+# used to store the locations info to prevent the
+# same location info from appearing again when database is queried again
 locations_data = []
+# Used to store data of a location when going to another page
 location_data = {}
+
 # this is to stop the same photo from
 # reappearing when viewing the location
 location_count = 0
@@ -59,8 +69,10 @@ class LoginScreen(Screen):
 
     def login(self):
         global USER_EMAIL
+        # refers to user email without trailing or leading whitespace
         USER_EMAIL = self.ids.user_email.text.strip()
         global user_name
+        # refers to username without trailing or leading whitespace
         user_name = self.ids.username.text.strip()
         user_password = self.ids.password.text
         userdata = {
@@ -70,25 +82,27 @@ class LoginScreen(Screen):
             u'description': ""
         }
         if USER_EMAIL == "" or user_name == "" or user_password == "":
-            # Snackbar(text="One of the fields is not filled",
-            #          button_text="BUTTON", button_callback=lambda: self.callback).show()
+            # Shows a popup that one of the fields is not filled
             Snackbar(text="One of the fields is not filled.").open()
             return
         userinfo_valid = True
 
         try:
-            # User exists
-            # user = auth.get_user_by_email(USER_EMAIL)
-            # print("user exists")
-            # CHECK WHETHER PW CORRECT
+            # reference to user on database (/Users/user_email)
             user_db_ref = db.collection(u'Users').document(USER_EMAIL)
+            # getting data
             newuserdata = user_db_ref.get()
+            # if user exists on the database
             if newuserdata.exists:
                 tempuserdata = newuserdata.to_dict()
+                # if password incorrect
                 if userdata['password'] != tempuserdata['password']:
+                    # returns a popup saying password is incorrect
                     Snackbar(text="Password incorrect.").open()
                     userinfo_valid = False
+                # if username incorrect
                 elif userdata['username'] != tempuserdata['username']:
+                    # returns a popup saying username is incorrect
                     Snackbar(text="Username incorrect.").open()
                     userinfo_valid = False
                 userdata = tempuserdata
@@ -98,47 +112,46 @@ class LoginScreen(Screen):
 
         except Exception:
             print(Exception)
-            # User does not have an account
-            # user = auth.create_user(
-            #     email=USER_EMAIL,
-            #     email_verified=False,
-            #     password=user_password,
-            #     display_name=user_name,
-            #     disabled=False
-            # )
             db.collection('Users').document(USER_EMAIL).set(userdata)
             # print('Sucessfully created new user: {0}'.format(userdata.uid))
         finally:
             # Go to main page
-            # storing the user in the ids part
             if not userinfo_valid:
                 return
+            # storing the user in the ids
             self.ids["user"] = userdata
+            # go to mainpage
             self.manager.current = "mainpage"
             self.manager.transition.direction = "left"
-        # TODO: SEND REQUEST to firestore??
 
 
 class AddLocationScreen_1(Screen):
+
+    # function to show the time picker for closing time
     def show_closing_time_picker(self):
         time_dialog = MDTimePicker()
         time_dialog.bind(time=self.get_closing_time)
         time_dialog.open()
 
+    # function to show the time picker for opening time
     def show_opening_time_picker(self):
         time_dialog = MDTimePicker()
         time_dialog.bind(time=self.get_opening_time)
         time_dialog.open()
 
+    # function to update the text for closing time when the closing time on the time picker changes
     def get_opening_time(self, instance, time):
         self.ids.opening_time.text = str(time)
 
+    # function to update the text for closing time when the opening time on the time picker changes
     def get_closing_time(self, instance, time):
         self.ids.closing_time.text = str(time)
 
+    # function that runs when going to addlocation2
     def to_addlocation2(self):
         location_coords = []
         try:
+            # location coords of the mapmarker on the map
             location_coords = [
                 self.ids["mapmarker"].lat,
                 self.ids["mapmarker"].lon
@@ -158,22 +171,29 @@ class AddLocationScreen_1(Screen):
         if user_ans_dict["closing_time"] == "" or user_ans_dict["location_name"] == "" or user_ans_dict["opening_time"] == "":
             Snackbar(text="One of the fields is not filled.").open()
             return
-
+        # navigates to addlocation_2 page
         self.manager.current = "addlocation_2"
         self.manager.transition.direction = "left"
 
+    # function that runs when you enter the page
+
     def on_pre_enter(self):
+        # getting mapview from ids
         mapview = self.ids.addlocation_map
+        # changing the lat and lon the map is focused on
         mapview.lat = currentlat
         mapview.lon = currentlon
+        # running on_touch_map when map is touched
         mapview.on_touch_down = self.on_touch_map
 
     def on_touch_map(self, touch):
+        # bbox refers to the coordinates at the top right hand corner and the bottom left hand corner
         bbox = self.ids.addlocation_map.get_bbox()
         print(bbox)
 
-        # finding lat and lon on the map
+        # finding lat and lon on the map from touch location
         lat, lon = self.ids.addlocation_map.get_latlon_at(touch.x, touch.y)
+        # offsetting the values because it does not work for different screen sizes (Doesnt really work very well)
         lat, lon = lat - 0.0003649793, lon - 0.0013741504
         if self.width < 700:
             lon += 0.0008598847
@@ -181,41 +201,49 @@ class AddLocationScreen_1(Screen):
             lat -= -0.0000751428
             lon -= -0.000451037
 
+        # Since clicking anywhere on the screen registers as a press on the mapview,
+        #  I need to check whether the place that the user clicked on is within the mapview
         marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
         if not marker_within_mapview:
             return
 
         print("Touch down on", touch.x, touch.y)
 
-        # TODO: works on computer sized screen but on phone is gg
-
         print("Tapped on", lat, lon)
         print(self.width, self.height)
         # putting the mapmarker
         marker = MapMarker(lat=lat, lon=lon)
+        # if mapmarker is not on the map
         if self.ids.get("mapmarker") == None:
             self.ids.addlocation_map.add_marker(marker)
             self.ids["mapmarker"] = marker
-        else:
+        else:  # mapmarker is on the map
+            # remove the current mapmarker
             self.ids.addlocation_map.remove_widget(
                 self.ids["mapmarker"]
             )
+            # add the new mapmarker with the updated coordinates
             self.ids.addlocation_map.add_marker(marker)
             self.ids["mapmarker"] = marker
 
 
 class AddLocationScreen_2(Screen):
-
+    # function runs when user clicks "take photo" button
     def take_photo(self, num, *args):
         global photo_path
+        # enabling camera
         self.ids["camera"].play = False
+        # export current image to png
         self.ids["camera"].export_to_png(f"./cache/location{num}.png")
+        # remove the camera widget
         self.ids.camerawrapper.remove_widget(
             self.ids["camera"]
-        )  # remove camera widget
+        )
         photo_path = f"./cache/location{num}.png"
         print(photo_path)
 
+        # basically the code block below that uses cv2 is used to remove the black parts
+        # of the photo that is on the sides of the image (not in the image)
         import cv2
 
         img = cv2.imread(photo_path)
@@ -228,98 +256,130 @@ class AddLocationScreen_2(Screen):
         crop = img[y:y+h, x:x+w]
         cv2.imwrite(photo_path, crop)
 
+        # making an image of the photo that was taken
         location_image = Image(
             source=f"./cache/location{num}.png", allow_stretch=True)
-        self.ids.camerawrapper.add_widget(
-            location_image)  # add image widget
+        # add image widget
+        self.ids.camerawrapper.add_widget(location_image)
         self.ids["location_image"] = location_image
 
-        # remove stuff from appwrapper
+        # remove take_photo button
         self.ids.appwrapper.remove_widget(
             self.ids["take_photo"]
-        )  # remove take_photo button
-
+        )
+        # making a take_photo_again button
         take_photo_again = MDFillRoundFlatButton(
             text="Take photo again",
             on_press=lambda x: self.take_photo_again(num),
         )
+        # adding the take_photo_again button
         self.ids.appwrapper.add_widget(take_photo_again)
+        # assigning it an id
         self.ids["take_photo_again"] = take_photo_again
 
+    # function runs when user clicks "take photo again" button
     def take_photo_again(self, num, *args):
+        # remove the image that was taken
         os.remove(f"./cache/location{num}.png")
+        # removing the image widget
         self.ids.camerawrapper.remove_widget(
             self.ids["location_image"]
-        )  # remove image widget
+        )
 
+        # making a camera widget
         camera = Camera(play=True, resolution=(640, 480))
-        self.ids.camerawrapper.add_widget(camera)  # add camera widget
+        # add camera widget
+        self.ids.camerawrapper.add_widget(camera)
+        # assigning it an id
         self.ids["camera"] = camera
 
-        # remove stuff from appwrapper
+        # remove take_photo_again button
         self.ids.appwrapper.remove_widget(
             self.ids["take_photo_again"]
-        )  # remove take_photo_again button
+        )
+
+        # adding take_photo button
         take_photo = MDFillRoundFlatButton(
             text="Take photo",
+            # num is different because if the path to the image taken is the same,
+            # even after deleting it, it stays as the same image
             on_press=lambda x: self.take_photo(num+1)
         )
         self.ids.appwrapper.add_widget(take_photo)
         self.ids["take_photo"] = take_photo
 
+    # function runs when submitting new lcoation
     def submit_new_location(self):
+        # if no description provided, a popup would appear
         if self.ids.location_description.text == "":
             Snackbar(text="No description provided.").open()
             return
 
+        # if no picture provided, a popup would appear
         if photo_path == "":
             Snackbar(text="No picture is uploaded.").open()
             return
         print('submit_new_location ran')
 
-        # TODO: THIS IS NOT DONE
-        # there is still mapview and is_mall
+        # making a reference to the class addlocation1
         addlocation_1_ref = self.manager.get_screen("addlocation_1")
+
+        # Represents coords of the new location
         location_coords = [
             str(addlocation_1_ref.ids["mapmarker"].lat),
             str(addlocation_1_ref.ids["mapmarker"].lon)
         ]
-
-        bucket = storage.bucket()  # storage bucket
+        # storage bucket
+        bucket = storage.bucket()
+        # name of image -> "<location name> <coords of the location>",
+        # e.g. "macs (1.1, 101)"
         name = f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)})"
+        # making a blob
         blob = bucket.blob(name)
+        # uploading the photo to the blob
         blob.upload_from_filename(photo_path)
-
         blob.make_public()
+        # getting public url
         url = blob.public_url
         print(url)
 
         from PIL import Image
-
+        # width of image
         basewidth = 80
         img = Image.open(photo_path)
+        # finding the basewidth as percentage of current width
         wpercent = (basewidth / float(img.size[0]))
+        # rescaling the height based on the percentage
         hsize = int((float(img.size[1]) * float(wpercent)))
+        # img should still have same aspect ratio, and this
+        # resizes the image down where width is 80
         img = img.resize((basewidth, hsize), Image.ANTIALIAS)
+        # saving the image to the photo path
         img.save(photo_path)
-
+        # name of image -> "<location name> <coords of the location> (smaller)",
+        # e.g. "macs (1.1, 101) (smaller)"
         name = f"{addlocation_1_ref.ids.location_name.text} ({','.join(location_coords)}) (smaller)"
+        # making the blob
         blob = bucket.blob(name)
+        # uploading the image to the blob
         blob.upload_from_filename(photo_path)
 
         blob.make_public()
+        # getting public url of the image
         small_url = blob.public_url
-
+        # removing the photo_path
         os.remove(photo_path)
 
-        # finding midpoint in chunk
+        # turn strings to floats (had to turn to strings so i could use .join() on them)
         location_coords[0] = float(location_coords[0])
         location_coords[1] = float(location_coords[1])
 
+        # finding midpoint in chunk (chunk is 0.02 * 0.02 in terms of lat and lon)
         lat = round(int(location_coords[0] * 50) / 50 + 0.01, 2)
         lon = round(int(location_coords[1] * 50) / 50 + 0.01, 2)
+        # chunk is represented by midpoint so its easier to find  and its easy to find boundaries
         chunk = (lat, lon)
-        print(self.ids.location_description.text)
+
         user_ans_dict = {
             "opening_time": addlocation_1_ref.ids.opening_time.text,
             "closing_time": addlocation_1_ref.ids.closing_time.text,
@@ -335,28 +395,33 @@ class AddLocationScreen_2(Screen):
             "3starcount": 0,
             "4starcount": 0,
             "5starcount": 0,
-            # "chunk": chunk
-            # MOREEEEEEEE, maybe level?
         }
+        # reference to /Chunks/(x, y), where x and y is midpoint in chunk
         chunk_ref = db.collection(u'Chunks').document(str(chunk))
+        # setting the dict {"chunk": chunk} in the document
         chunk_ref.set({"chunk": chunk})
-        # Setting the document
+
         location_ref = db.collection(u'Chunks').document(str(chunk)).collection(
             u'Locations').document(user_ans_dict["location_name"])
+        # Setting the document in /Chunks/(x, y)/Locations/location_name, where x and y is midpoint in chunk
         location_ref.set(user_ans_dict)
         print("Document set!")
 
         print(user_ans_dict)
-        # db.collection(u'Chunks').document(name).set(user_ans_dict)
         print("location set!")
+
+        # redirects user back to mainpage
         self.manager.current = 'mainpage'
         self.manager.transition.direction = 'right'
 
+    # runs when user enters addlocation2 screen
     def on_pre_enter(self):
+        # lets the camera play
         self.ids.camera.play = True
 
-    # in case user leaves page with camera still on
+    # runs when user leaves addlocation2 screen
     def on_pre_leave(self, *args):
+        # in case user leaves page with camera still on (closes camera)
         self.ids.camera.play = False
 
 
@@ -364,87 +429,78 @@ selected_mapmarker = None
 
 
 class AddHistoryItemScreen(Screen):
+
+    # runs when user enters this screen
     def on_pre_enter(self, *args):
+        # changing centre of the map to user's current lat and lon
         self.ids.addhistoryitem_map.lat = currentlat
         self.ids.addhistoryitem_map.lon = currentlon
-        # self.ids.addhistoryitem_map.on_touch_down = self.on_touch_map
 
+    # runs when user enters page
     def on_enter(self):
-        # TODO: DOESNT WORK NJKGUYJCFTYCJFYUK
-        # mapview = self.ids.addhistoryitem_map
         global locations_data
         print(locations_data)
         for i in locations_data:
-            print(f"{i['location_name']}.png")
+            # print(f"{i['location_name']}.png")
+            # making the mapmarker at the location coords
             mapmarker = MapMarker(
                 lat=i['location_coords'][0],
                 lon=i['location_coords'][1],
+                # runs the function() when mapmarker is pressed
                 on_press=self.mapmarker_pressed,
             )
             print(str(i['location_coords']))
+            # adding the location
             self.ids[str(i['location_coords'])] = mapmarker
             self.ids.addhistoryitem_map.add_marker(mapmarker)
 
+    # runs when mapmarker is pressed
     def mapmarker_pressed(self, instance):
+        # gets coords of the pressed mapmarker
         coords = [instance.lat, instance.lon]
-        print(coords)
         print("Source: "+self.ids[str(coords)].source)
+
+        # changes the source to a green mapmarker
         self.ids[str(coords)].source = ''
         self.ids[str(coords)].source = 'green_mapmarker.png'
         global selected_mapmarker
         print("Selected mapmarker:", selected_mapmarker)
         print("Keys in self.ids:", self.ids.keys())
+        # checks if the previously selected mapmarker is a mapmarker
+        # (sometimes there isnt a previous selected_mapmarker)
         if selected_mapmarker in self.ids.keys():
             self.ids[selected_mapmarker].source = '/Users/alonzopuah/Documents/GitHub/JSAcompcoursework2023/.env/lib/python3.10/site-packages/kivy_garden/mapview/icons/marker.png'
+        # changes the selected mapmarker to the new one
         selected_mapmarker = str(coords)
         print("selected_mapmarker in self.ids.keys()")
 
+    # function to show the date picker for when this was eaten
     def show_date_picker(self):
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_date_save)
         date_dialog.open()
 
+    # function to update the text that shows the date
     def on_date_save(self, instance, value, date_range):
         self.ids.date_input.text = str(value)
         print(value)
 
+    # function to show the time picker for when this was eaten
     def show_time_picker(self):
         time_dialog = MDTimePicker()
         time_dialog.bind(time=self.get_time)
         time_dialog.open()
 
+    # function to update the text that shows the time
     def get_time(self, instance, time):
         self.ids.time_input.text = str(time)
 
-    # def on_touch_map(self, touch):
-    #     bbox = self.ids.addhistoryitem_map.get_bbox()
-
-    #     # finding lat and lon on the map
-    #     lat, lon = self.ids.addhistoryitem_map.get_latlon_at(touch.x, touch.y)
-    #     lat, lon = lat - 0.0002737344, lon - 0.000263021
-    #     if self.width < 650:
-    #         lat -= 0.0000053673
-    #         lon += 0.0001235686
-
-    #     marker_within_mapview = bbox[0] < lat < bbox[2] and bbox[1] < lon < bbox[3]
-    #     if not marker_within_mapview:
-    #         return
-    #     print("Tapped on", lat, lon)
-    #     # putting the mapmarker
-    #     marker = MapMarker(lat=lat, lon=lon)
-    #     if self.ids.get("mapmarker") == None:
-    #         self.ids.addhistoryitem_map.add_marker(marker)
-    #         self.ids["mapmarker"] = marker
-    #     else:
-    #         self.ids.addhistoryitem_map.remove_widget(
-    #             self.ids["mapmarker"]
-    #         )
-    #         self.ids.addhistoryitem_map.add_marker(marker)
-    #         self.ids["mapmarker"] = marker
-
+    # runs when submitting a new history item
     def submit_history_item(self):
         global selected_mapmarker
+        # if no mapmarker is on the map
         if selected_mapmarker == None:
+            # returns a popup saying that location is not selected
             Snackbar(text="Location not selected.").open()
             return
         # sg_tz = pytz.timezone("Singapore")
