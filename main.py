@@ -15,6 +15,7 @@ from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.pickers import MDTimePicker
 from kivymd.uix.list import TwoLineAvatarIconListItem
 from kivymd.uix.label import MDLabel
+from kivymd.uix.list import ThreeLineListItem
 
 # from kivy.uix.image import AsyncImage
 from kivy.uix.camera import Camera
@@ -43,10 +44,12 @@ currentlat, currentlon = g.latlng
 print(g.latlng)
 
 USER_EMAIL = ""
+user_name = ""
 photo_path = f""
 history_data = {}
 history_items = []
 locations_data = []
+location_data = {}
 # this is to stop the same photo from
 # reappearing when viewing the location
 location_count = 0
@@ -56,8 +59,9 @@ class LoginScreen(Screen):
 
     def login(self):
         global USER_EMAIL
-        USER_EMAIL = self.ids.user_email.text
-        user_name = self.ids.username.text
+        USER_EMAIL = self.ids.user_email.text.strip()
+        global user_name
+        user_name = self.ids.username.text.strip()
         user_password = self.ids.password.text
         userdata = {
             u'email': USER_EMAIL,
@@ -205,11 +209,11 @@ class AddLocationScreen_2(Screen):
     def take_photo(self, num, *args):
         global photo_path
         self.ids["camera"].play = False
-        self.ids["camera"].export_to_png(f"./location{num}.png")
+        self.ids["camera"].export_to_png(f"./cache/location{num}.png")
         self.ids.camerawrapper.remove_widget(
             self.ids["camera"]
         )  # remove camera widget
-        photo_path = f"./location{num}.png"
+        photo_path = f"./cache/location{num}.png"
         print(photo_path)
 
         import cv2
@@ -225,7 +229,7 @@ class AddLocationScreen_2(Screen):
         cv2.imwrite(photo_path, crop)
 
         location_image = Image(
-            source=f"./location{num}.png", allow_stretch=True)
+            source=f"./cache/location{num}.png", allow_stretch=True)
         self.ids.camerawrapper.add_widget(
             location_image)  # add image widget
         self.ids["location_image"] = location_image
@@ -243,7 +247,7 @@ class AddLocationScreen_2(Screen):
         self.ids["take_photo_again"] = take_photo_again
 
     def take_photo_again(self, num, *args):
-        os.remove(f"./location{num}.png")
+        os.remove(f"./cache/location{num}.png")
         self.ids.camerawrapper.remove_widget(
             self.ids["location_image"]
         )  # remove image widget
@@ -554,10 +558,12 @@ class HistoryItemScreen(Screen):
         # self.ids.history_map.
 
     def submit_review(self):
+        global user_name
         user_review_dict = {
             u"review": self.ids.review.text,
             u"rating": self.starcount,
-            u'servertimestamp': SERVER_TIMESTAMP
+            u'servertimestamp': SERVER_TIMESTAMP,
+            u'user': user_name
         }
         print(user_review_dict)
 
@@ -574,9 +580,19 @@ class HistoryItemScreen(Screen):
             Snackbar(text="Review not filled.").open()
             return
         # TODO: add to reviewcount
+        global history_data
+
         review_ref = db.collection('Chunks').document(str(self.history_chunk)).collection(
-            'Locations').document(self.history_name).collection('Reviews')
-        review_ref.document(current_time).set(user_review_dict)
+            'Locations').document(self.history_name)
+        doc = review_ref.get()
+        if doc.exists:
+            doc = doc.to_dict()
+
+        doc[f'{self.starcount}starcount'] = doc[f'{self.starcount}starcount'] + 1
+        review_ref.set(doc)
+
+        review_ref.collection('Reviews').document(
+            current_time).set(user_review_dict)
 
         self.manager.current = 'mainpage'
         self.manager.transition.direction = 'right'
@@ -586,11 +602,15 @@ class HistoryItemScreen(Screen):
 
 
 class ViewLocation(Screen):
-    def on_enter(self, *args):
+    def on_enter(self):
         global location_data
         print(location_data)
+
         if 'description' in location_data:
-            self.ids.location_description.text = location_data['description']
+            if location_data['is_mall']:
+                self.ids.location_description.text = f"In mall:\n{location_data['description']}"
+            else:
+                self.ids.location_description.text = location_data['description']
         else:
             self.ids.location_description.text = "No description provided"
         self.ids.location_name.text = location_data['location_name']
@@ -599,7 +619,7 @@ class ViewLocation(Screen):
         )
         if response.status_code:
             global location_count
-            photo_path = f"./location{location_count}.png"
+            photo_path = f"./cache/location{location_count}.png"
             with open(photo_path, 'wb') as fp:
                 fp.write(response.content)
             self.ids.location_image.source = photo_path
@@ -619,29 +639,95 @@ class ViewLocation(Screen):
         total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
             location_data['3starcount'] + \
             location_data['4starcount'] + location_data['5starcount']
+        total_rating = location_data['1starcount'] + location_data['2starcount'] * 2 + \
+            location_data['3starcount'] * 3 + \
+            location_data['4starcount'] * 4 + location_data['5starcount'] * 5
+
         self.ids.review_count.text = f"{total_reviews} Reviews"
-        self.ids.rating.text = str(round(total_reviews / 5, 1))
+        self.ids.rating_one.max = total_reviews
+        self.ids.rating_two.max = total_reviews
+        self.ids.rating_three.max = total_reviews
+        self.ids.rating_four.max = total_reviews
+        self.ids.rating_five.max = total_reviews
+
+        if total_reviews == 0:
+            self.ids.rating.text = "0.0"
+        else:
+            self.ids.rating.text = str(round(total_rating / total_reviews, 1))
+
         self.ids.rating_one.value = location_data['1starcount']
         self.ids.rating_two.value = location_data['2starcount']
         self.ids.rating_three.value = location_data['3starcount']
         self.ids.rating_four.value = location_data['4starcount']
         self.ids.rating_five.value = location_data['5starcount']
 
-        return super().on_pre_enter(*args)
-
     def on_leave(self, *args):
         self.ids.location_image.source = ''
         self.ids.view_location_map.remove_widget(self.ids['mapmarker'])
-        os.remove(f"./location{location_count-1}.png")
+        print(f"./cache/location{location_count-1}.png")
+        os.remove(f"./cache/location{location_count-1}.png")
+
+
+review_data = {}
+current_reviews = []
 
 
 class ReviewsPage(Screen):
-    pass
+
+    def to_review_page(self, instance):
+        global review_data
+        review_data = instance.reviewdata
+        self.manager.current = 'reviewitem'
+        self.manager.transition.direction = 'left'
+
+    def on_enter(self):
+        global location_data
+        global current_reviews
+        Snackbar(
+            text="To review this, you need to add it to your history first, then review it on the history item page"
+        ).open()
+        self.ids.location_label.text = location_data['location_name']
+
+        total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
+            location_data['3starcount'] + \
+            location_data['4starcount'] + location_data['5starcount']
+        total_rating = location_data['1starcount'] + location_data['2starcount'] * 2 + \
+            location_data['3starcount'] * 3 + \
+            location_data['4starcount'] * 4 + location_data['5starcount'] * 5
+        if total_reviews == 0:
+            self.ids.average_rating.text = "Average: No reviews yet"
+        else:
+            self.ids.average_rating.text = f"Average: {str(round(total_rating / total_reviews, 1))} of 5 stars"
+        # getting reviews from database
+        reviews_ref = db.collection(u'Chunks').document(f"({location_data['chunk'][0]}, {location_data['chunk'][1]})").collection(
+            u'Locations').document(location_data['location_name']).collection(u'Reviews')
+        reviews = reviews_ref.stream()
+        has_list = False
+        for doc in reviews:
+            has_list = True
+            review_dict = doc.to_dict()
+            print(review_dict)
+            if review_dict not in current_reviews:
+
+                listitem = ThreeLineListItem(
+                    text=review_dict['user'],
+                    secondary_text=review_dict['review'],
+                    tertiary_text=f"{review_dict['rating']} of 5 stars",
+                    on_press=self.to_review_page,
+                )
+                listitem.reviewdata = review_dict
+                self.ids.review_list.add_widget(listitem)
+                current_reviews.append(review_dict)
+        if not has_list:
+            self.ids.review_list.add_widget(
+                MDLabel(text="No reviews yet", halign="center")
+            )
 
 
 class ReviewItemScreen(Screen):
     def on_pre_enter(self, *args):
-        star = 3
+        global review_data
+        star = review_data['rating']
         if star == 1:
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#d6d6d6"
@@ -673,8 +759,13 @@ class ReviewItemScreen(Screen):
             self.ids.star_five.text_color = "#f6ae00"
             self.ids.star_five.text_color = "#f6ae00"
 
+        self.ids.review_text.text = review_data['review']
+        self.ids.reviewer.text = review_data['user']
+        self.ids.rating.text = f"{star} of 5 stars"
+
 
 class MainPage(Screen):
+    # this function actually means to convert to chunk im just lazy to change every occurrence
     def convert_to_bbox(self, coords):
         bottom_lat = round(int(coords[0] * 50) / 50, 2)
         bottom_lon = round(int(coords[1] * 50) / 50, 2)
@@ -684,7 +775,6 @@ class MainPage(Screen):
         )
 
     def view_location(self, instance):
-        print(dir(instance))
         global location_data
         location_data = instance.location_data
         print(location_data)
@@ -706,6 +796,7 @@ class MainPage(Screen):
 
         user[u'username'] = new_profile_dict[u"username"]
         user[u'description'] = new_profile_dict[u"description"]
+        Snackbar(text="Username and description updated.").open()
         print(user)
 
     def to_historyitem(self, instance):

@@ -11,85 +11,18 @@
       padding: (20, 40)
       orientation: 'horizontal'
       MDLabel:
+        id: location_label
         font_size: 50
         bold: True
-        text: "Macdonalds Reviews"
+        # text: "Macdonalds Reviews"
       MDLabel:
         font_size: 30
         bold: True
         color: 0.655,0.545,0.98,1
-        text: "Average: 4.9 of 5 stars"
+        id: average_rating
+        # text: "Average: 4.9 of 5 stars"
         pos_hint: {'x': 2, 'y': 0}
     ScrollView:
       MDList:
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-          
-        ThreeLineListItem:
-          text: "Jayden"
-          secondary_text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eget lorem efficitur, fermentum risus vel, fringilla ex. Cras interdum ullamcorper blandit"
-          tertiary_text: "Rating: 3 of 5 stars"
-          on_press: app.page_change('reviewitem','left')
-      
-
-
-      #         BoxLayout: # this contains the stars
-      #           orientation: 'horizontal'
-      #           spacing: 0
-      #           padding: (0,0)
-                
-      #           MDIconButton:
-      #             theme_text_color: "Custom"
-      #             # text_color: app.theme_cls.primary_color
-      #             text_color: "#f6ae00"
-      #             icon: "star"
-      #           MDIconButton:
-      #             icon: "star"
-      #             theme_text_color: "Custom"
-      #             text_color: "#f6ae00"
-      #           MDIconButton:
-      #             icon: "star"
-      #             theme_text_color: "Custom"
-      #             text_color: "#f6ae00"
-      #           MDIconButton:
-      #             icon: "star"
-      #             theme_text_color: "Custom"
-      #             text_color: "#f6ae00"
-      #           MDIconButton:
-      #             icon: "star"
-      #             theme_text_color: "Custom"
-      #             text_color: "#f6ae00"
-              
+        id: review_list
+        
