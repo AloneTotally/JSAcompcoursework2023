@@ -505,17 +505,18 @@ class AddHistoryItemScreen(Screen):
             return
         # sg_tz = pytz.timezone("Singapore")
         # current_time = datetime.now(sg_tz)
-        # name of document
+        # name of document -> e.g. "2023-02-19,00:43:00"
         date_time = self.ids.date_input.text + "," + self.ids.time_input.text
+        # turns the lat and lon of selected marker into a float from a string
         local_selected_mapmarker = [
             float(x) for x in selected_mapmarker[1:-1].split(',')
         ]
         print("selected mapmarker:", local_selected_mapmarker)
-        # finding current chunk
+        # finding current chunk by using the convert_to_bbox() function i defined
         current_chunk = self.manager.get_screen(
             'mainpage').convert_to_bbox(local_selected_mapmarker)
         print("current_chunk:", current_chunk)
-
+        # Gets a reference to the current location that is reviewed
         location_ref = db.collection(u"Chunks").document(str(current_chunk)).collection(
             u"Locations").where(u'location_coords', u'==', local_selected_mapmarker)
         # this locations variable is actually just one location
@@ -525,28 +526,42 @@ class AddHistoryItemScreen(Screen):
         for doc in locations:
             location = doc.to_dict()
             print("Location_dict: ", location)
+            # gets the location name
             location_name = location['location_name']
         print("Location_name:", location_name)
+        # the dictionary that will be sent to the server
         user_ans_dict = {
             'restaurant_name': location_name,
-            # 'Date_of_consumption': self.ids.date.text,
             'location_coords': local_selected_mapmarker,
             'date': self.ids.date_input.text,
             'time': self.ids.time_input.text,
             'servertimestamp': SERVER_TIMESTAMP
         }
-        if user_ans_dict['restaurant_name'] == "" or user_ans_dict['date'] == "" or user_ans_dict['time'] == "":
-            Snackbar(text="One of the fields is not filled.").open()
+        # Checks if any of the fields are not filled
+
+        # if restaurant name not filled
+        if user_ans_dict['restaurant_name'] == "":
+            Snackbar(text="Name not filled.").open()
+            return
+        # if restaurant date not filled
+        elif user_ans_dict['date'] == "":
+            Snackbar(text="Date is not filled.").open()
+            return
+        # if restaurant time not filled
+        elif user_ans_dict['time'] == "":
+            Snackbar(text="Time is not filled.").open()
             return
         # TODO: SEND REQUEST
         print(user_ans_dict)
 
-        # NOT FINALISED YET
+        # Gets a ref to the history document that will be submitted
         historyitem_ref = db.collection(u"Users").document(
             USER_EMAIL).collection(u"History").document(date_time)
         print(historyitem_ref)
         print(USER_EMAIL, date_time)
+        # sets the document onto the database
         historyitem_ref.set(user_ans_dict)
+        # navigates to the mainpage
         self.manager.current = 'mainpage'
         self.manager.transition.direction = 'left'
 
@@ -556,29 +571,34 @@ class HistoryItemScreen(Screen):
 
     def click_star(self, star):
         if star == 1:
+            # changes the first star to yellow and rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#d6d6d6"
             self.ids.star_three.text_color = "#d6d6d6"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 2:
+            # changes the second star to yellow and rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#d6d6d6"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 3:
+            # changes the third star to yellow and rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 4:
+            # changes the fourth star to yellow and rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
             self.ids.star_four.text_color = "#f6ae00"
         if star == 5:
+            # changes the fifth star to yellow and rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
@@ -586,14 +606,15 @@ class HistoryItemScreen(Screen):
             self.ids.star_five.text_color = "#f6ae00"
             self.ids.star_five.text_color = "#f6ae00"
 
-        # using self to store a number
+        # using self to store the starcount
         self.starcount = star
 
+    # runs when user enters the historyitemscreen page
     def on_enter(self, *args):
         global history_data
         print("Keys of ids:", self.ids.keys())
         print("Entered historyitem: ", history_data)
-        # storing info about the history item which will be used in reviews
+        # storing info (history chunk and history page) about the history item which will be used in reviews
         self.history_chunk = self.manager.get_screen(
             'mainpage').convert_to_bbox(history_data['location_coords'])
         self.history_name = history_data['restaurant_name']
@@ -609,7 +630,18 @@ class HistoryItemScreen(Screen):
             lat=history_data['location_coords'][0], lon=history_data['location_coords'][1])
         self.ids['mapmarker'] = marker
         self.ids.historyitem_map.add_widget(marker)
-        # self.ids.num_reviews = "Reviews"
+        location_ref = db.collection(u"Chunks").document(f"({self.history_chunk[0]}, {self.history_chunk[1]})").collection(
+            u'Locations').document(history_data['restaurant_name'])
+        doc = location_ref.get()
+        total_reviews = 0
+        if doc.exists:
+            location_data = doc.to_dict()
+            total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
+                location_data['3starcount'] + \
+                location_data['4starcount'] + location_data['5starcount']
+        else:
+            print("Location doesnt exist")
+        self.ids.num_reviews = f"{total_reviews} Reviews"
 
         # self.ids.history_map.
 
