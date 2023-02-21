@@ -75,7 +75,7 @@ class LoginScreen(Screen):
         # refers to username without trailing or leading whitespace
         user_name = self.ids.username.text.strip()
         user_password = self.ids.password.text
-        userdata = {
+        userdata 
             u'email': USER_EMAIL,
             u'username': user_name,
             u'password': user_password,
@@ -664,7 +664,7 @@ class ViewLocation(Screen):
 
         if 'description' in location_data:
             if location_data['is_mall']:
-                self.ids.location_description.text = f"In mall:\n{location_data['description']}"
+                self.ids.location_description.text = f"(In mall)\n{location_data['description']}"
             else:
                 self.ids.location_description.text = location_data['description']
         else:
