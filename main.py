@@ -620,33 +620,48 @@ class HistoryItemScreen(Screen):
         self.history_name = history_data['restaurant_name']
 
         # changing ui
+
+        # setting location name in the places that it will be used
         self.ids.location_name.text = history_data['restaurant_name']
         self.ids.location_name_review.text = history_data['restaurant_name']
+        # setting the time at which the food was eaten
         self.ids.eaten_time.text = "Eaten at: " + str(history_data['time'])
+        # setting the map to center on the coordinates of the location
         self.ids.historyitem_map.center_on(
             history_data['location_coords'][0], history_data['location_coords'][1])
-        # TODO: SET BBOX
+
+        # making the mapmarker which will be on the map
         marker = MapMarkerPopup(
             lat=history_data['location_coords'][0], lon=history_data['location_coords'][1])
+        # giving this mapmarker an id
         self.ids['mapmarker'] = marker
+        # adding this mapmarker
         self.ids.historyitem_map.add_widget(marker)
+        # getting a reference to the document where the location is stored
         location_ref = db.collection(u"Chunks").document(f"({self.history_chunk[0]}, {self.history_chunk[1]})").collection(
             u'Locations').document(history_data['restaurant_name'])
+        # getting the data from the reference
         doc = location_ref.get()
+        # setting a total reviews var which will be used later
         total_reviews = 0
         if doc.exists:
+            # this variable refers to the location data
             location_data = doc.to_dict()
+            # this is the total reviews by adding the 1starcount, 2starcount, etc together
+
             total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
                 location_data['3starcount'] + \
                 location_data['4starcount'] + location_data['5starcount']
+            print(total_reviews)
         else:
             print("Location doesnt exist")
-        self.ids.num_reviews = f"{total_reviews} Reviews"
+        # setting the number of reviews on the name
+        self.ids.num_reviews.text = f"{total_reviews} Reviews"
 
-        # self.ids.history_map.
-
+    # this function runs when the user submits a review
     def submit_review(self):
         global user_name
+        # this refers to the review that will be uploaded to the database
         user_review_dict = {
             u"review": self.ids.review.text,
             u"rating": self.starcount,
@@ -654,24 +669,30 @@ class HistoryItemScreen(Screen):
             u'user': user_name
         }
         print(user_review_dict)
-
+        # sets the timezone to singapore
         sg_tz = pytz.timezone("Singapore")
+        # sets the current time with reference to the timezone
         current_time = str(datetime.now(sg_tz))
 
+        # check if review too long
         if len(user_review_dict[u"review"]) > 100:
             Snackbar(text="Review too long.").open()
             return
+        # check if no stars are inputted
         elif self.starcount == 0:
             Snackbar(text="Rating not filled.").open()
             return
+        # check if there is a review in the first place
         elif user_review_dict[u"review"] == "":
             Snackbar(text="Review not filled.").open()
             return
-        # TODO: add to reviewcount
+        # refers to the history data that was updated when the historypage was entered
         global history_data
 
+        # is a reference to the location
         review_ref = db.collection('Chunks').document(str(self.history_chunk)).collection(
             'Locations').document(self.history_name)
+        # gets the location data from the database
         doc = review_ref.get()
         if doc.exists:
             doc = doc.to_dict()
