@@ -696,7 +696,7 @@ class ViewLocation(Screen):
 
         if 'description' in location_data:
             if location_data['is_mall']:
-                self.ids.location_description.text = f"In mall:\n{location_data['description']}"
+                self.ids.location_description.text = f"(In mall)\n{location_data['description']}"
             else:
                 self.ids.location_description.text = location_data['description']
         else:
