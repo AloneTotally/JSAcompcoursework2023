@@ -647,8 +647,8 @@ class HistoryItemScreen(Screen):
         if doc.exists:
             # this variable refers to the location data
             location_data = doc.to_dict()
-            # this is the total reviews by adding the 1starcount, 2starcount, etc together
 
+            # this is the total reviews by adding the 1starcount, 2starcount, etc together
             total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
                 location_data['3starcount'] + \
                 location_data['4starcount'] + location_data['5starcount']
@@ -696,84 +696,113 @@ class HistoryItemScreen(Screen):
         doc = review_ref.get()
         if doc.exists:
             doc = doc.to_dict()
-
+        # adds one to the starcount of whatever rating it was
         doc[f'{self.starcount}starcount'] = doc[f'{self.starcount}starcount'] + 1
+        # sets the document with the newly updated data (replacing)
         review_ref.set(doc)
-
+        # Sets the data on the review page
         review_ref.collection('Reviews').document(
             current_time).set(user_review_dict)
 
+        # redirects back to mainpage
         self.manager.current = 'mainpage'
         self.manager.transition.direction = 'right'
 
+    # runs when the user leaves the historyitem screen
     def on_leave(self):
+        # removes the mapamarker so that when you reenter the page the mapmarker will not stay there
         self.ids.historyitem_map.remove_widget(self.ids['mapmarker'])
 
 
 class ViewLocation(Screen):
+
+    # runs when the user enters the viewlocation screen
     def on_enter(self):
+        # refers to the location data of the location that is clicked
         global location_data
         print(location_data)
-
+        # location has a description
         if 'description' in location_data:
+            # if is_mall is true
             if location_data['is_mall']:
+                # adds an "in mall" before everything else
                 self.ids.location_description.text = f"(In mall)\n{location_data['description']}"
             else:
+                # shows the description of the location
                 self.ids.location_description.text = location_data['description']
         else:
+            # since no description provided, sets text as "No description provided"
             self.ids.location_description.text = "No description provided"
+        # sets the location name
         self.ids.location_name.text = location_data['location_name']
+        # gets the photourl in the location
         response = requests.get(
             location_data['photoURL']
         )
+        # if the response is successful
         if response.status_code:
             global location_count
+            # the location_count is used to stop the same photo from
+            # reappearing when viewing the same path
             photo_path = f"./cache/location{location_count}.png"
+            # saves the photo to the photo_path variable which represents the path of the photo
             with open(photo_path, 'wb') as fp:
                 fp.write(response.content)
+            # sets the source of the image in the ui to the photo path
             self.ids.location_image.source = photo_path
             location_count += 1
-
+        # centers the map onto the coords of the location
         self.ids.view_location_map.center_on(
             location_data['location_coords'][0],
             location_data['location_coords'][1]
         )
+        # sets the mapmarker to the coords of the location
         locationmapmarker = MapMarker(
             lat=location_data['location_coords'][0],
             lon=location_data['location_coords'][1],
         )
+        # gives the mapmarker an id
         self.ids['mapmarker'] = locationmapmarker
-        self.ids.view_location_map.add_widget(locationmapmarker)
 
+        self.ids.view_location_map.add_widget(locationmapmarker)
+        # refers to total reviews of the location (by adding up 1starcount, 2starcount, etc)
         total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
             location_data['3starcount'] + \
             location_data['4starcount'] + location_data['5starcount']
+        # refers to total reviews of the location (by adding up 1starcount * 1, 2starcount * 2, etc)
         total_rating = location_data['1starcount'] + location_data['2starcount'] * 2 + \
             location_data['3starcount'] * 3 + \
             location_data['4starcount'] * 4 + location_data['5starcount'] * 5
 
+        # sets the review count
         self.ids.review_count.text = f"{total_reviews} Reviews"
+        # configuring the max of each progressbar
         self.ids.rating_one.max = total_reviews
         self.ids.rating_two.max = total_reviews
         self.ids.rating_three.max = total_reviews
         self.ids.rating_four.max = total_reviews
         self.ids.rating_five.max = total_reviews
-
+        # sets to 0 to prevent zerodivision error
         if total_reviews == 0:
             self.ids.rating.text = "0.0"
         else:
+            # represents the average rating
             self.ids.rating.text = str(round(total_rating / total_reviews, 1))
-
+        # configuring the value of each progressbar
         self.ids.rating_one.value = location_data['1starcount']
         self.ids.rating_two.value = location_data['2starcount']
         self.ids.rating_three.value = location_data['3starcount']
         self.ids.rating_four.value = location_data['4starcount']
         self.ids.rating_five.value = location_data['5starcount']
 
+    # runs when the user leaves the viewlocation page
     def on_leave(self, *args):
+        # sets the image source to nothing (removing the image basically)
         self.ids.location_image.source = ''
+        # removes the mapmarker from the map
         self.ids.view_location_map.remove_widget(self.ids['mapmarker'])
         print(f"./cache/location{location_count-1}.png")
+        # minus 1 becuase the location_count was changed later on
         os.remove(f"./cache/location{location_count-1}.png")
 
 
@@ -782,85 +811,123 @@ current_reviews = []
 
 
 class ReviewsPage(Screen):
-
+    # runs when the user wants to go to the review page
     def to_review_page(self, instance):
         global review_data
+        # gets the review data from the review that was clicked
         review_data = instance.reviewdata
+        # goes to the reviewitem screem
         self.manager.current = 'reviewitem'
         self.manager.transition.direction = 'left'
 
+    # rus when the user enters the reviewspage screen
     def on_enter(self):
         global location_data
+        # refers to reviews that have been loaded
         global current_reviews
+        # shows a popup which reminds the user on how to review the location they are viewing from
         Snackbar(
             text="To review this, you need to add it to your history first, then review it on the history item page"
         ).open()
+        # changing the location label to the location name
         self.ids.location_label.text = location_data['location_name']
-
+        # refers to total reviews of the location (by adding up 1starcount, 2starcount, etc)
         total_reviews = location_data['1starcount'] + location_data['2starcount'] + \
             location_data['3starcount'] + \
             location_data['4starcount'] + location_data['5starcount']
+        # refers to total reviews of the location (by adding up 1starcount * 1, 2starcount * 2, etc)
         total_rating = location_data['1starcount'] + location_data['2starcount'] * 2 + \
             location_data['3starcount'] * 3 + \
             location_data['4starcount'] * 4 + location_data['5starcount'] * 5
+
+        # if no reviews yet
         if total_reviews == 0:
+            # shows no reviews yet to avoid zero division error when calculating average reviews
             self.ids.average_rating.text = "Average: No reviews yet"
         else:
+            # calculates average reviews and puts it into the label which contains the average
             self.ids.average_rating.text = f"Average: {str(round(total_rating / total_reviews, 1))} of 5 stars"
-        # getting reviews from database
+
+        # gets reference to 'review' collection in the database
         reviews_ref = db.collection(u'Chunks').document(f"({location_data['chunk'][0]}, {location_data['chunk'][1]})").collection(
             u'Locations').document(location_data['location_name']).collection(u'Reviews')
+        # getting all reviews from database
         reviews = reviews_ref.stream()
+        # has_list refers to whether reviews are present
         has_list = False
+        # looping through each review
         for doc in reviews:
+            # reviews present
             has_list = True
             review_dict = doc.to_dict()
             print(review_dict)
+            # if review has not been loaded already
             if review_dict not in current_reviews:
-
+                # defines a listitem
                 listitem = ThreeLineListItem(
                     text=review_dict['user'],
                     secondary_text=review_dict['review'],
                     tertiary_text=f"{review_dict['rating']} of 5 stars",
                     on_press=self.to_review_page,
                 )
+                # gives listitem a property which has the
+                # data that has been gotten from the database
                 listitem.reviewdata = review_dict
+                # adds the listitem
                 self.ids.review_list.add_widget(listitem)
+                # give it an id
+                self.ids[review_dict['review']] = listitem
+                # appends loaded listitem to the loaded reviews list
                 current_reviews.append(review_dict)
+        # in the scenario that no reviews have been added
         if not has_list:
+            # adds a label which shows that no reviews have been added yet
             self.ids.review_list.add_widget(
                 MDLabel(text="No reviews yet", halign="center")
             )
 
+    def on_leave(self):
+        global current_reviews
+        for i in current_reviews:
+            self.ids.review_list.remove_widget(self.ids[i['review']])
+
 
 class ReviewItemScreen(Screen):
+    # runs when the user enters the reviewitemscreen
     def on_pre_enter(self, *args):
+        # this is the data of the review item
         global review_data
+        # refers to the rating of the review
         star = review_data['rating']
         if star == 1:
+            # changes the first star to yellow and the rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#d6d6d6"
             self.ids.star_three.text_color = "#d6d6d6"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 2:
+            # changes the second star to yellow and the rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#d6d6d6"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 3:
+            # changes the third star to yellow and the rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
             self.ids.star_four.text_color = "#d6d6d6"
             self.ids.star_five.text_color = "#d6d6d6"
         if star == 4:
+            # changes the fourth star to yellow and the rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
             self.ids.star_four.text_color = "#f6ae00"
         if star == 5:
+            # changes the fifth star to yellow and the rest to grey
             self.ids.star_one.text_color = "#f6ae00"
             self.ids.star_two.text_color = "#f6ae00"
             self.ids.star_three.text_color = "#f6ae00"
@@ -868,58 +935,78 @@ class ReviewItemScreen(Screen):
             self.ids.star_five.text_color = "#f6ae00"
             self.ids.star_five.text_color = "#f6ae00"
 
+        # sets the review text to the review text from database
         self.ids.review_text.text = review_data['review']
+        # sets the review user to the review user from database
         self.ids.reviewer.text = review_data['user']
+        # sets the review rating to the review rating from database
         self.ids.rating.text = f"{star} of 5 stars"
 
 
 class MainPage(Screen):
     # this function actually means to convert to chunk im just lazy to change every occurrence
     def convert_to_bbox(self, coords):
+        # finds the lowest possible lat in the chunk
         bottom_lat = round(int(coords[0] * 50) / 50, 2)
+        # finds the lowest possible lon in the chunk
         bottom_lon = round(int(coords[1] * 50) / 50, 2)
+        # returns midpoint of the chunk in terms of lat and lon (chunk is 0.02 * 0.02)
         return (
             round(bottom_lat + 0.01, 2),
             round(bottom_lon + 0.01, 2)
         )
+    # runs when the user clicks on the location button
 
     def view_location(self, instance):
         global location_data
+        # refers to the location data
         location_data = instance.location_data
         print(location_data)
         print("view_location has been run")
 
+        # redirects user to viewlocation page
         self.manager.current = "viewlocation"
         self.manager.transition.direction = "left"
 
+    # runs when user pressed "update profile" button
     def update_profile(self):
+        # refers to updated username and description
         new_profile_dict = {
             u"username": self.ids.username_input.text,
             u"description": self.ids.description_input.text
         }
-        # TODO: SEND REQUEST
+        # find the user if
         user = self.manager.get_screen('login').ids['user']
 
+        # gets a reference to the document which has info about the user
         profile_ref = db.collection('Users').document(user['email'])
+        # updates the username and description
         profile_ref.update(new_profile_dict)
 
+        # change username and description
         user[u'username'] = new_profile_dict[u"username"]
         user[u'description'] = new_profile_dict[u"description"]
+        # popup showing that it has been updated
         Snackbar(text="Username and description updated.").open()
         print(user)
 
+    # runs when the user clicks on a history item
     def to_historyitem(self, instance):
-        print(dir(instance))
         global history_data
+        # this refers to the history data of the clicked element
         history_data = instance.history_data
         print(history_data)
 
+        # redirects user to historyitem
         self.manager.current = "historyitem"
         self.manager.transition.direction = "left"
+
+    # initialise global variables
     images_list = []
     loaded_chunks = []
     coords = []
 
+    # runs when the user opens the mainpage
     def load_locations(self):
         bbox = self.ids.main_map.get_bbox()
         bottom_lat = round(int(bbox[0] * 50) / 50, 2)
@@ -927,13 +1014,13 @@ class MainPage(Screen):
         top_lat = round(int(bbox[2] * 50) / 50 + 0.02, 2)
         top_lon = round(int(bbox[3] * 50) / 50 + 0.02, 2)
         print(bottom_lat, bottom_lon, top_lat, top_lon)
-        # lat_diff = top_lat - bottom_lat
-        # lon_diff = top_lon - bottom_lon
 
         arr_coords = []
+        # finds the midpoint of the bottom-left chunk
         temp_lat = round(bottom_lat + 0.01, 2)
         temp_lon = round(bottom_lon + 0.01, 2)
 
+        # finds all the chunks in the current view of the mapview
         while temp_lat < top_lat:
             temp_lon = round(bottom_lon + 0.01, 2)
             while temp_lon < top_lon:
@@ -942,21 +1029,23 @@ class MainPage(Screen):
             temp_lat = round(temp_lat + 0.02, 2)
 
         print(arr_coords)
-        # Sending request
+        # a reference to the chunk
         chunk_ref = db.collection(u"Chunks")
         location_num = 0
         for i in arr_coords:
-            # doc = chunk_ref.document(str(i)).get()
-            # if doc.exists:
+            # if current arr_coords is not loaded
             if i not in self.loaded_chunks:
                 self.loaded_chunks.append(i)
+                # gets reference to the locations
                 chunk_locations_ref = chunk_ref.document(
                     str(i)).collection(u'Locations')
+                # gets all the locations
                 docs = chunk_locations_ref.stream()
                 for doc in docs:
                     locationdata = doc.to_dict()
+                    # represents the loaded locations
                     global locations_data
-                    # locations_data.append(locationdata['location_coords'])
+                    # appends to the loaded locations list
                     locations_data.append(locationdata)
                     print(f'\n{doc.id} => {locationdata}')
 
@@ -965,92 +1054,121 @@ class MainPage(Screen):
                         response = requests.get(
                             locationdata['smallphotoURL']
                         )
+                        # the path that the photo will be stored in
                         location_path = ""
+                        # if request is successful
                         if response.status_code:
                             location_path = f"./cache/location{locationdata['location_name']}.png"
+                            # writes the image data into the path
                             with open(location_path, 'wb') as fp:
                                 fp.write(response.content)
+                        # if image not in list that represents loaded images
                         if location_path not in self.images_list:
+                            # append the photo_path to the list
                             self.images_list.append(location_path)
 
+                        # mapmarker popup which represents the coordinates
                         marker = MapMarkerPopup(
                             lat=locationdata['location_coords'][0],
                             lon=locationdata['location_coords'][1],
+                            # source is the image that has been loaded
                             source=location_path
                         )
+                    # if no image
                     else:
+                        # just loads the mapmarker with no image
                         marker = MapMarkerPopup(
                             lat=locationdata['location_coords'][0],
                             lon=locationdata['location_coords'][1],
                         )
+                    # represents the button that shows up when the mapmarker popup is clicked
                     button = MDRoundFlatButton(
                         text=locationdata['location_name'],
                         md_bg_color=[0.24705882352941178,
                                      0.3176470588235294, 0.7098039215686275, 1.0],
                         text_color=[1, 1, 1, 1],
-                        # on_release=lambda x: self.view_location(locationdata)
                         on_release=self.view_location
                     )
+                    # stores button data as a property
                     button.location_data = locationdata
+                    # add button to the mapmarker
                     marker.add_widget(button)
+                    # add mapmarker to the main map
                     self.ids.main_map.add_widget(marker)
                     print("widget added")
 
     def on_enter(self):
+        # if map has not been loaded already
         if self.ids.main_map.lon == 0 and self.ids.main_map.lat == 0:
+            # center the map on the user's location
             self.ids.main_map.center_on(currentlat, currentlon)
-        # TODO: comment out this later
-        # self.ids.main_map.center_on(1.31, 103.85)
+        # loads locations
         self.load_locations()
 
         print("entered mainpage")
-        # GET data from firestore
+        # gets reference to the history document of the current user
         history_ref = db.collection(u"Users").document(
             USER_EMAIL).collection(u"History")
+        # gets all history items
         docs = history_ref.stream()
         global history_items
         currentdate = ''
         for doc in docs:
+            # represents the data from the database
             historyitemdata = doc.to_dict()
+            # represents the list item in the history screen
             listitem = TwoLineAvatarIconListItem(
                 text=historyitemdata["restaurant_name"],
                 secondary_text=historyitemdata["time"],
                 on_release=self.to_historyitem)
-
+            # adds history data as a property
             listitem.history_data = historyitemdata
-            # TODO: add a date to the widget
+            # if it has previously not been loaded
             if historyitemdata not in history_items:
+                # append it to the list which represents the loaded history itesm
                 history_items.append(historyitemdata)
                 if historyitemdata['date'] != currentdate:
+                    # represents the date at which the history item was posted
                     datelabel = MDLabel(
                         padding=(20, 0),
                         text=historyitemdata['date'],
                         font_size=50,
                         bold=True
                     )
-                    # self.ids.historylist is the history wrapper
+                    # add datelabel to the historylist
                     self.ids.historylist.add_widget(datelabel)
+                    # change current date (so that this date wont appear for those that are on the same day)
                     currentdate = historyitemdata['date']
+
                 self.ids.historylist.add_widget(listitem)
             # making currentdate something other than ''
             currentdate = 'currentdate'
+            # append historyitemdata to the loaded history items list
             history_items.append(historyitemdata)
             print(historyitemdata)
+        # if there is a "no history yet" label in the history list
         if 'nohistorylabel' in self.ids.keys():
             self.ids.historylist.remove_widget(self.ids['nohistorylabel'])
             # making currentdate something other than ''
             currentdate = 'currentdate'
+        # when there are no history items
         if currentdate == '':
+            # represents a text saying "no history item yet"
             nohistorylabel = MDLabel(
                 halign='center',
                 text="No history yet",
                 pos_hint={'center_x': 0.5, 'center_y': 0.5}
             )
+            # add the nohistorylabel to the historylist
             self.ids.historylist.add_widget(nohistorylabel)
+            # assigning it an id
             self.ids['nohistorylabel'] = nohistorylabel
 
+        # represents a user
         user = self.manager.get_screen('login').ids['user']
         print(user)
+        # setting the username and description on the profile page to be equal
+        # to the user's username and description
         self.ids.username_input.text = user['username']
         self.ids.description_input.text = user['description']
 
@@ -1071,6 +1189,7 @@ class MainPage(Screen):
 class HomePage(MDApp):
 
     def build(self):
+        # setting the theme of the whole app in general
         self.theme_cls.primary_palette = "Indigo"
         self.theme_cls.theme_style = "Dark"
 
@@ -1088,6 +1207,7 @@ class HomePage(MDApp):
         Builder.load_file("pages/otherpages/addlocation_2.kv")
         Builder.load_file("pages/login.kv")
 
+        # screenman
         sm = ScreenManager()
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(MainPage(name="mainpage"))
@@ -1101,6 +1221,7 @@ class HomePage(MDApp):
 
         return sm
 
+    # when the checkbox in addlocation is active
     def on_checkbox_active(self, checkbox, value):
         print(value, checkbox.state)
         if value:
@@ -1112,17 +1233,17 @@ class HomePage(MDApp):
 
     # Screen transition functions
 
+    # function for going to any page
     def page_change(self, name, direction):
         self.root.current = name
         self.root.transition.direction = direction
 
-    # The functions for going back to certain pages
-
+    # The functions for going back to homepage
     def back_homepage(self):
         self.root.current = "mainpage"
         self.root.transition.direction = "right"
 
-    # Close an error popup
+    # Close a popup
     def callback(self, instance):
         from kivymd.toast import toast
 
