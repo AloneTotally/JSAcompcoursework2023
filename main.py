@@ -75,7 +75,7 @@ class LoginScreen(Screen):
         # refers to username without trailing or leading whitespace
         user_name = self.ids.username.text.strip()
         user_password = self.ids.password.text
-        userdata 
+        userdata = {
             u'email': USER_EMAIL,
             u'username': user_name,
             u'password': user_password,
