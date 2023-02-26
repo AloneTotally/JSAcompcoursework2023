@@ -890,6 +890,7 @@ class ReviewsPage(Screen):
         global current_reviews
         for i in current_reviews:
             self.ids.review_list.remove_widget(self.ids[i['review']])
+        current_reviews = []
 
 
 class ReviewItemScreen(Screen):
