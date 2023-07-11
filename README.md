@@ -9,6 +9,7 @@ App/program that helps you decide what to eat judging by the locations near you 
 - firebase
 
 > Note: As ip address is used to find the user's location, it might not be as accurate as using the native features (Python has limitations)
+> Secondly, this would not work properly as it does not have the json file which connects this project and firebase.
 
 ## Planned updates
 
