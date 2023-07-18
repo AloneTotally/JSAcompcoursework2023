@@ -31,7 +31,7 @@ import pytz
 from firebase_admin.firestore import SERVER_TIMESTAMP
 
 cred = credentials.Certificate(
-    "foodie-804d6-firebase-adminsdk-b0buj-0424ea77a6.json")
+    "foodie-804d6-5d1ccf6449a3.json")
 # intitialise the app
 firebase_admin.initialize_app(cred, {
     'storageBucket': "foodie-804d6.appspot.com",
