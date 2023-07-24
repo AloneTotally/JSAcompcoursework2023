@@ -1,6 +1,8 @@
 # JSAcompcoursework2023
 
-App/program that helps you decide what to eat judging by the locations near you. Here is the link to the app demo: https://drive.google.com/file/d/1nYLLBabQlykz2ZQTm3M4rLVkXQ2YbaYz/view?usp=sharing
+App/program that helps you decide what to eat judging by the locations near you. This was developed as a group project with 3 members. Here is the link to the app demo: https://drive.google.com/file/d/1nYLLBabQlykz2ZQTm3M4rLVkXQ2YbaYz/view?usp=sharing
+
+
 
 ## Tools
 
